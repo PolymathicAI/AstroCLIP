@@ -56,7 +56,7 @@ _URLS = {
 class DesiSSL(datasets.GeneratorBasedBuilder):
     """TODO: Short description of my dataset."""
 
-    VERSION = datasets.Version("1.1.0")
+    VERSION = datasets.Version("1.1.2")
 
     # This is an example of a dataset with multiple configurations.
     # If you don't want/need to define several sub-sets in your dataset,
@@ -86,7 +86,7 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
                     # "answer": datasets.Value("string")
                     # These are the features of your dataset like images, labels ...
                     "image": datasets.Array3D(shape=(152, 152, 3), dtype='float32'),
-                    "spectrum": datasets.Array1D(shape=(7781,), dtype='float32'),
+                    "spectrum": datasets.Array2D(shape=(7781,1), dtype='float32'),
                     "redshift": datasets.Value("float32")
                 }
             )
@@ -149,7 +149,7 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
     # method parameters are unpacked from `gen_kwargs` as given in `_split_generators`
     def _generate_examples(self, filepath, split):
         # Open matched catalog
-        joint_cat = Table.from_pandas(pd.read_parquet(filepath+'/matched_catalog.pq'))
+        joint_cat = pd.read_parquet(filepath+'/matched_catalog.pq').drop_duplicates(subset=["key"])
 
         # Depending on the split, we only consider a subset of the data
         if split == 'train':
@@ -160,13 +160,11 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
         for i in range(*data_range):
             # Considering only the objects that are in the current file
             sub_cat = joint_cat[joint_cat['inds'] // 1000000 == i]
-            try:
-                with h5py.File(filepath+'/images_npix152_00%d000000_00%d000000.h5'%(i,i+1)) as d:
-                    for j in range(len(sub_cat)):
-                        yield sub_cat['targetid'][j], {
-                            "image": d['images'][sub_cat['inds'][j] % 1000000],
-                            "spectrum": sub_cat['flux'][j],
-                            "redshift": sub_cat['redshift'][j]
-                        }
-            except:
-                continue
+            
+            with h5py.File(filepath+'/images_npix152_0%02d000000_0%02d000000.h5'%(i,i+1)) as d:
+                for j in range(len(sub_cat)):
+                    yield str(sub_cat['key'].iloc[j]), {
+                        "image": np.array(d['images'][sub_cat['inds'].iloc[j] % 1000000]).T.astype('float32'),
+                        "spectrum": np.reshape(sub_cat['flux'].iloc[j], [-1, 1]).astype('float32'),
+                        "redshift": sub_cat['redshift'].iloc[j]
+                    }
