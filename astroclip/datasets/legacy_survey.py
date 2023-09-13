@@ -56,7 +56,7 @@ _URLS = {
 class DesiSSL(datasets.GeneratorBasedBuilder):
     """TODO: Short description of my dataset."""
 
-    VERSION = datasets.Version("1.1.2")
+    VERSION = datasets.Version("1.1.3")
 
     # This is an example of a dataset with multiple configurations.
     # If you don't want/need to define several sub-sets in your dataset,
@@ -151,15 +151,22 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
         # Open matched catalog
         joint_cat = pd.read_parquet(filepath+'/matched_catalog.pq').drop_duplicates(subset=["key"])
 
+        # Create randomized indices to shuffle the dataset
+        rng = np.random.default_rng(seed=42)
+        indices = rng.permutation(len(joint_cat))
+
         # Depending on the split, we only consider a subset of the data
         if split == 'train':
-            data_range = (0, 8)
+            indices = indices[:8*len(indices)//10]
         elif split == 'test':
-            data_range = (8, 10)
+            indices = indices[8*len(indices)//10:]
 
-        for i in range(*data_range):
+        # Extract only the relevant indices for this split
+        joint_cat = joint_cat.iloc[indices]
+
+        for i in range(10):
             # Considering only the objects that are in the current file
-            sub_cat = joint_cat[joint_cat['inds'] // 1000000 == i]
+            sub_cat = joint_cat.iloc[joint_cat['inds'] // 1000000 == i]
             
             with h5py.File(filepath+'/images_npix152_0%02d000000_0%02d000000.h5'%(i,i+1)) as d:
                 for j in range(len(sub_cat)):
