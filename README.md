@@ -14,7 +14,5 @@ pip install datasets timm
 
 ## Usage
 
-Please take a look at this initial prototyping notebook to see how the data looks like and how to use it:
-
-https://github.com/FoundationModelsForScience/AstroCLIP/blob/main/notebooks/dev/ConvolutionalPrototyping.ipynb 
+Please take a look at this initial prototyping notebook to see how the data looks like and how to use it: [notebook](notebooks/dev/ConvolutionalPrototyping.ipynb)
 
