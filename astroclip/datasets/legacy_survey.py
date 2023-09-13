@@ -166,7 +166,7 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
 
         for i in range(10):
             # Considering only the objects that are in the current file
-            sub_cat = joint_cat.iloc[joint_cat['inds'] // 1000000 == i]
+            sub_cat = joint_cat[joint_cat['inds'] // 1000000 == i]
             
             with h5py.File(filepath+'/images_npix152_0%02d000000_0%02d000000.h5'%(i,i+1)) as d:
                 for j in range(len(sub_cat)):
