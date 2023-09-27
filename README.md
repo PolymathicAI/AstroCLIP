@@ -9,7 +9,7 @@ Multimodal contrastive pretraining for astronomical data
 This repo should only have basic pytorch and huggingface requirements. The following should install all that is needed (so far)
 
 ```bash
-pip install datasets timm
+pip install datasets timm lightning
 ```
 
 ## Usage
