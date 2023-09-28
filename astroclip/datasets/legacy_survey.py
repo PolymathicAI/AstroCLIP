@@ -126,7 +126,7 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
         # By default the archives will be extracted and a path to a cached folder where they are extracted is returned instead of the archive
         # urls = _URLS[self.config.name]
         # data_dir = dl_manager.download_and_extract(urls)
-        data_dir = '/mnt/home/flanusse/ceph'
+        data_dir = '/mnt/ceph/users/flanusse'
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
