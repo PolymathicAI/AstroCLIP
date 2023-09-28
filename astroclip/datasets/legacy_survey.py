@@ -87,7 +87,8 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
                     # These are the features of your dataset like images, labels ...
                     "image": datasets.Array3D(shape=(152, 152, 3), dtype='float32'),
                     "spectrum": datasets.Array2D(shape=(7781,1), dtype='float32'),
-                    "redshift": datasets.Value("float32")
+                    "redshift": datasets.Value("float32"),
+                    "targetid": datasets.Value("int64")
                 }
             )
         else:  # This is an example to show how to have different features for "first_domain" and "second_domain"
