@@ -173,5 +173,6 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
                     yield str(sub_cat['key'].iloc[j]), {
                         "image": np.array(d['images'][sub_cat['inds'].iloc[j] % 1000000]).T.astype('float32'),
                         "spectrum": np.reshape(sub_cat['flux'].iloc[j], [-1, 1]).astype('float32'),
-                        "redshift": sub_cat['redshift'].iloc[j]
+                        "redshift": sub_cat['redshift'].iloc[j],
+                        "targetid": sub_cat['targetid'].iloc[j],
                     }
