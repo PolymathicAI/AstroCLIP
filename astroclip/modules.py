@@ -60,7 +60,8 @@ class AstroCLIP(L.LightningModule):
         self.image_projection = nn.Linear(image_last_layer_dim, embedding_dim)
         
         self.spectrum_encoder = spectrum_encoder
-        spectrum_last_layer_dim = list(spectrum_encoder.children())[-1].out_features
+        # TODO: this is a hacky way to get the last layer of the spectrum encoder
+        spectrum_last_layer_dim = list(list(spectrum_encoder.children())[-1].children)[-1].out_features
         self.spectrum_projection = nn.Linear(spectrum_last_layer_dim, embedding_dim)
 
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07)).softplus() + 1e-2
