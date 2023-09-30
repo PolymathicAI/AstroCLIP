@@ -15,10 +15,8 @@
 
 import json
 import os
-import pandas as pd
 import glob
 import h5py
-from astropy.table import Table, join
 import datasets
 import numpy as np
 
@@ -39,17 +37,16 @@ _HOMEPAGE = ""
 # TODO: Add the licence for the dataset here if you can find it
 _LICENSE = ""
 
-# TODO: Add link to the official dataset URLs here
 # The HuggingFace Datasets library doesn't host the datasets but only points to the original files.
 # This can be an arbitrary nested dict/list of URLs (see below in `_split_generators` method)
 _URLS = {
-    "joint": "https://huggingface.co/great-new-dataset-first_domain.zip",
+    "joint": "https://users.flatironinstitute.org/~flanusse/astroclip_desi.1.1.5.h5",
 }
 
 class DesiSSL(datasets.GeneratorBasedBuilder):
     """TODO: Short description of my dataset."""
 
-    VERSION = datasets.Version("1.1.4")
+    VERSION = datasets.Version("1.1.5")
 
     # This is an example of a dataset with multiple configurations.
     # If you don't want/need to define several sub-sets in your dataset,
@@ -106,7 +103,8 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
         # By default the archives will be extracted and a path to a cached folder where they are extracted is returned instead of the archive
         # urls = _URLS[self.config.name]
         # data_dir = dl_manager.download_and_extract(urls)
-        data_dir = '/mnt/ceph/users/flanusse'
+        urls = _URLS[self.config.name]
+        data_dir = dl_manager.download_and_extract(urls)
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
@@ -128,31 +126,28 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
 
     # method parameters are unpacked from `gen_kwargs` as given in `_split_generators`
     def _generate_examples(self, filepath, split):
-        # Open matched catalog
-        joint_cat = pd.read_parquet(filepath+'/matched_catalog.pq').drop_duplicates(subset=["key"])
+        """ Yields examples. """
+        with h5py.File(filepath+'/astroclip_desi.1.1.5.h5') as d:
 
-        # Create randomized indices to shuffle the dataset
-        rng = np.random.default_rng(seed=42)
-        indices = rng.permutation(len(joint_cat))
+            for i in range(10):
+                
+                # Access the data
+                images = d[str(i)]['images']
+                spectra = d[str(i)]['spectra']
+                redshifts = d[str(i)]['redshifts']
+                targetids = d[str(i)]['targetids']
 
-        # Depending on the split, we only consider a subset of the data
-        if split == 'train':
-            indices = indices[:8*len(indices)//10]
-        elif split == 'test':
-            indices = indices[8*len(indices)//10:]
+                dset_size = len(targetids)
 
-        # Extract only the relevant indices for this split
-        joint_cat = joint_cat.iloc[indices]
+                if split == 'train':
+                    dset_range = (0, int(0.8*dset_size))
+                else:
+                    dset_range = (int(0.8*dset_size), dset_size)
 
-        for i in range(10):
-            # Considering only the objects that are in the current file
-            sub_cat = joint_cat[joint_cat['inds'] // 1000000 == i]
-            
-            with h5py.File(filepath+'/images_npix152_0%02d000000_0%02d000000.h5'%(i,i+1)) as d:
-                for j in range(len(sub_cat)):
-                    yield str(sub_cat['key'].iloc[j]), {
-                        "image": np.array(d['images'][sub_cat['inds'].iloc[j] % 1000000]).T.astype('float32'),
-                        "spectrum": np.reshape(sub_cat['flux'].iloc[j], [-1, 1]).astype('float32'),
-                        "redshift": sub_cat['redshift'].iloc[j],
-                        "targetid": sub_cat['targetid'].iloc[j],
+                for j in range(dset_range[0], dset_range[1]):
+                    yield str(targetids[j]), {
+                        "image": np.array(images[j]).astype('float32'),
+                        "spectrum": np.reshape(spectra[j], [-1, 1]).astype('float32'),
+                        "redshift": redshifts[j],
+                        "targetid": targetids[j],
                     }
