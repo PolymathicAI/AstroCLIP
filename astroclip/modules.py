@@ -22,7 +22,7 @@ class SpecralRegressor(L.LightningModule):
         x = batch['spectrum']
         y = batch['redshift']
         y_hat = self(x)
-        loss = nn.functional.mse_loss(y_hat, y)
+        loss = nn.functional.mse_loss(y_hat.squeeze(), y.squeeze())
         self.log('train_loss', loss)
         return loss
     
