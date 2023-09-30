@@ -4,6 +4,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 import lightning as L
 import numpy as np
+import torch.nn.functional as F
 
 from astroclip.networks.spectra import SpectrumEncoder
 from astroclip.losses import CLIPLoss
@@ -61,10 +62,10 @@ class AstroCLIP(L.LightningModule):
         
         self.spectrum_encoder = spectrum_encoder
         # TODO: this is a hacky way to get the last layer of the spectrum encoder
-        spectrum_last_layer_dim = list(list(spectrum_encoder.children())[-1].children())[-1].out_features
+        spectrum_last_layer_dim = 256#list(list(spectrum_encoder.children())[-1].children())[-1].out_features
         self.spectrum_projection = nn.Linear(spectrum_last_layer_dim, embedding_dim)
 
-        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07)).softplus() + 1e-2
+        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))#) + 1e-2
 
         self.image_augmentation = image_augmentation
         self.image_transform = image_transform
@@ -85,6 +86,7 @@ class AstroCLIP(L.LightningModule):
             raise ValueError("Either image or spectrum must be provided.")
         return embedding
     
+    @torch.no_grad()
     def on_after_batch_transfer(self, batch, dataloader_idx):
         im, sp = batch['image'], batch['spectrum']
 
@@ -92,30 +94,30 @@ class AstroCLIP(L.LightningModule):
             im = self.image_augmentation(im) if self.image_augmentation is not None else im
             sp = self.spectrum_augmentation(sp) if self.spectrum_augmentation is not None else sp
 
-        im = self.image_transform(im) if self.image_augmentation is not None else im
-        sp = self.spectrum_transform(sp) if self.spectrum_augmentation is not None else sp
+        im = self.image_transform(im) if self.image_transform is not None else im
+        sp = self.spectrum_transform(sp) if self.spectrum_transform is not None else sp
 
         return {'image': im, 'spectrum': sp}
     
     def training_step(self, batch, batch_idx):
         im, sp = batch['image'], batch['spectrum']
         
-        image_features = self(image=im)
-        spectrum_features = self(spectrum=sp)
+        image_features = nn.functional.normalize(self.image_projection(self.image_encoder(im)), p=2, dim=-1)
+        spectrum_features = nn.functional.normalize(self.spectrum_projection(self.spectrum_encoder(sp)), p=2, dim=-1)
         
-        loss = self.criterion(image_features, spectrum_features, self.logit_scale)
+        loss = self.criterion(image_features, spectrum_features, F.softplus(self.logit_scale))
 
         self.log("train_loss", loss)
-        self.log("scale", self.logit_scale)
+        self.log("scale", F.softplus(self.logit_scale))
         return loss
 
     def validation_step(self, batch, batch_idx):
         im, sp = batch['image'], batch['spectrum'].squeeze()
         
-        image_features = self(image=im)
-        spectrum_features = self(spectrum=sp)
+        image_features = nn.functional.normalize(self.image_projection(self.image_encoder(im)), p=2, dim=-1)
+        spectrum_features = nn.functional.normalize(self.spectrum_projection(self.spectrum_encoder(sp)), p=2, dim=-1)
         
-        loss = self.criterion(image_features, spectrum_features, self.logit_scale)
+        loss = self.criterion(image_features, spectrum_features, 1.0)
 
         self.log("val_loss", loss)
     
