@@ -8,7 +8,8 @@ setup(
         'torch',
         'lightning',
         'timm',
-        'datasets'
+        'datasets',
+        'wandb'
     ],
     author='EiffL',
     description='Cross-Modal Pretraining for Astronomical Images',

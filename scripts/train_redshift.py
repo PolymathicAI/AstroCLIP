@@ -1,11 +1,15 @@
 from torch.utils.data import DataLoader
-from pytorch_lightning.callbacks import ModelCheckpoint
+from lightning.pytorch.callbacks import ModelCheckpoint
 import lightning as L
 import datasets
 from astroclip.modules import SpecralRegressor
+from pytorch_lightning.loggers import WandbLogger
 
 
 def main():
+    # Instantiate logger
+    wandb_logger = WandbLogger(log_model="all", project="astroclip")
+
     # Load dataset
     dataset = datasets.load('legacy_survey')  # or datasets.LegacySurvey
     train_loader = DataLoader(dataset['train'], batch_size=64, 
@@ -20,9 +24,13 @@ def main():
     model = SpecralRegressor(num_features=1)
 
     # Initialize trainer
-    trainer = L.Trainer(gpus=1, max_epochs=10, 
-                        callbacks=[ModelCheckpoint(dirpath='checkpoints')])
-
+    trainer = L.Trainer(callbacks=[
+                ModelCheckpoint(
+                    every_n_epochs=5,
+                )],
+                logger=wandb_logger
+                )
+    
     # Train model
     trainer.fit(model, 
                 train_dataloader=train_loader, 
