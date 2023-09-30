@@ -24,20 +24,13 @@ import numpy as np
 
 # TODO: Add BibTeX citation
 # Find for instance the citation on arxiv or on the dataset repo/website
-_CITATION = """\
-@InProceedings{huggingface:dataset,
-title = {A great new dataset},
-author={huggingface, Inc.
-},
-year={2020}
-}
+_CITATION = """
 """
 
-# TODO: Add description of the dataset here
-# You can copy an official description
 _DESCRIPTION = """\
-This new dataset is designed to for cross-modal contrastive learning between
-images and spectra.
+This dataset is designed for cross-modal learning between images and spectra of galaxies 
+contained in the DESI Early Data Release and the Legacy Survey DR9. It contains roughly 150k
+examples of images and spectra of galaxies, with their redshifts and targetids.  
 """
 
 # TODO: Add a link to an official homepage for the dataset here
@@ -71,20 +64,14 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
     # data = datasets.load_dataset('my_dataset', 'second_domain')
     BUILDER_CONFIGS = [
         datasets.BuilderConfig(name="joint", version=VERSION, description="This part of the dataset covers examples from both specral and image domains"),
-        # datasets.BuilderConfig(name="second_domain", version=VERSION, description="This part of my dataset covers a second domain"),
     ]
 
     DEFAULT_CONFIG_NAME = "joint"  # It's not mandatory to have a default configuration. Just use one if it make sense.
 
     def _info(self):
-        # TODO: This method specifies the datasets.DatasetInfo object which contains informations and typings for the dataset
         if self.config.name == "joint":  # This is the name of the configuration selected in BUILDER_CONFIGS above
             features = datasets.Features(
                 {
-                    # "sentence": datasets.Value("string"),
-                    # "option1": datasets.Value("string"),
-                    # "answer": datasets.Value("string")
-                    # These are the features of your dataset like images, labels ...
                     "image": datasets.Array3D(shape=(152, 152, 3), dtype='float32'),
                     "spectrum": datasets.Array2D(shape=(7781,1), dtype='float32'),
                     "redshift": datasets.Value("float32"),
@@ -92,14 +79,6 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
                 }
             )
         else:  # This is an example to show how to have different features for "first_domain" and "second_domain"
-            # features = datasets.Features(
-            #     {
-            #         "sentence": datasets.Value("string"),
-            #         "option2": datasets.Value("string"),
-            #         "second_domain_answer": datasets.Value("string")
-            #         # These are the features of your dataset like images, labels ...
-            #     }
-            # )
             raise NotImplementedError("Only the joint configuration is implemented for now")
         
         return datasets.DatasetInfo(
