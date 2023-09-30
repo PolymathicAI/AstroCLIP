@@ -2,7 +2,7 @@ from torch import nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 import lightning as L
-from astroclip.networks.spectra import SpectraEncoder
+from astroclip.networks.spectra import SpectrumEncoder
 
 
 class SpecralRegressor(L.LightningModule):
@@ -11,7 +11,7 @@ class SpecralRegressor(L.LightningModule):
     """
     def __init__(self, num_features=1):
         super().__init__()
-        self.backbone = SpectraEncoder(None, 512)
+        self.backbone = SpectrumEncoder(None, 512)
         self.fc = nn.Linear(512, num_features)
 
     def forward(self, x):
