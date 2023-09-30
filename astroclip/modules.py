@@ -19,14 +19,16 @@ class SpecralRegressor(L.LightningModule):
         return self.fc(net)
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
+        x = batch['spectrum']
+        y = batch['redshift']
         y_hat = self(x)
         loss = nn.functional.mse_loss(y_hat, y)
         self.log('train_loss', loss)
         return loss
     
     def validation_step(self, batch, batch_idx):
-        x, y = batch
+        x = batch['spectrum']
+        y = batch['redshift']
         y_hat = self(x)
         loss = nn.functional.mse_loss(y_hat.squeeze(), y.squeeze())
         self.log('val_loss', loss)

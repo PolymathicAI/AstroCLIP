@@ -135,6 +135,8 @@ class SpectrumEncoder(nn.Module):
         s: `torch.tensor`, shape (N, n_latent)
             Batch of latents that encode `spectra`
         """
+        # Removing potential channels dimension
+        y = y.squeeze()
         # run through CNNs
         h, a = self._downsample(y)
         # softmax attention
