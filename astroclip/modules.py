@@ -48,6 +48,10 @@ class AstroCLIP(L.LightningModule):
     def __init__(self, image_encoder, 
                        spectrum_encoder,
                        embedding_dim=512,
+                       image_augmentation=None,
+                       image_transform=None,
+                       spectrum_augmentation=None,
+                       spectrum_transform=None,
                        loss='CLIP'):
         super().__init__()
 
@@ -60,6 +64,11 @@ class AstroCLIP(L.LightningModule):
         self.spectrum_projection = nn.Linear(spectrum_last_layer_dim, embedding_dim)
 
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07)).softplus() + 1e-2
+
+        self.image_augmentation = image_augmentation
+        self.image_transform = image_transform
+        self.spectrum_augmentation = spectrum_augmentation
+        self.spectrum_transform = spectrum_transform
 
         if loss == 'CLIP':
             self.criterion = CLIPLoss()
@@ -74,7 +83,19 @@ class AstroCLIP(L.LightningModule):
         else:
             raise ValueError("Either image or spectrum must be provided.")
         return embedding
+    
+    def on_after_batch_transfer(self, batch, dataloader_idx):
+        im, sp = batch['image'], batch['spectrum']
 
+        if self.trainer.training:
+            im = self.image_augmentation(im) if self.image_augmentation is not None else im
+            sp = self.spectrum_augmentation(sp) if self.spectrum_augmentation is not None else sp
+
+        im = self.image_transform(im) if self.image_augmentation is not None else im
+        sp = self.spectrum_transform(sp) if self.spectrum_augmentation is not None else sp
+
+        return {'image': im, 'spectrum': sp}
+    
     def training_step(self, batch, batch_idx):
         im, sp = batch['image'], batch['spectrum']
         
