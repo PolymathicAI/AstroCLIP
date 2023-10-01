@@ -68,12 +68,12 @@ class AstroCLIP(L.LightningModule):
         super().__init__()
 
         self.image_encoder = image_encoder
-        image_last_layer_dim = list(image_encoder.children())[-1].out_features
+        image_last_layer_dim = 128 #list(image_encoder.children())[-1].out_features
         self.image_projection = nn.Linear(image_last_layer_dim, embedding_dim)
         
         self.spectrum_encoder = spectrum_encoder
         # TODO: this is a hacky way to get the last layer of the spectrum encoder
-        spectrum_last_layer_dim = 256#list(list(spectrum_encoder.children())[-1].children())[-1].out_features
+        spectrum_last_layer_dim = 128#list(list(spectrum_encoder.children())[-1].children())[-1].out_features
         self.spectrum_projection = nn.Linear(spectrum_last_layer_dim, embedding_dim)
 
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))#) + 1e-2
@@ -89,6 +89,7 @@ class AstroCLIP(L.LightningModule):
             raise NotImplementedError
             
     def forward(self, image=None, spectrum=None):
+        image = (image, None)
         if image is not None and spectrum is None:
             embedding = nn.functional.normalize(self.image_projection(self.image_encoder(image)), p=2, dim=-1)
         elif image is None and spectrum is not None:
@@ -112,7 +113,7 @@ class AstroCLIP(L.LightningModule):
     
     def training_step(self, batch, batch_idx):
         im, sp = batch['image'], batch['spectrum']
-        
+        im = (im, None)
         image_features = nn.functional.normalize(self.image_projection(self.image_encoder(im)), p=2, dim=-1)
         spectrum_features = nn.functional.normalize(self.spectrum_projection(self.spectrum_encoder(sp)), p=2, dim=-1)
         
@@ -124,7 +125,7 @@ class AstroCLIP(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         im, sp = batch['image'], batch['spectrum'].squeeze()
-        
+        im = (im, None)
         image_features = nn.functional.normalize(self.image_projection(self.image_encoder(im)), p=2, dim=-1)
         spectrum_features = nn.functional.normalize(self.spectrum_projection(self.spectrum_encoder(sp)), p=2, dim=-1)
         
