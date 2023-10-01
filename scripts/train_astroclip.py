@@ -14,7 +14,7 @@ from astroclip.augmentations import ToRGB, AddGaussianNoise, SpectrumNoising
 from astroclip.modules import AstroCLIP
 
 import torchvision.models as models
-from torchvision.transforms import Compose, RandomVerticalFlip, RandomHorizontalFlip, RandomRotation, CenterCrop, InterpolationMode
+from torchvision.transforms import Compose, RandomVerticalFlip, RandomHorizontalFlip, RandomRotation, CenterCrop, InterpolationMode, ToTensor
 
 from pl_bolts.models.self_supervised import Moco_v2
 
@@ -59,18 +59,17 @@ def main():
             AddGaussianNoise(0,0.15),
     ])
     cpu_augmentations = Compose([
-            ToRGB(),
-            RandomRotation(45,interpolation=InterpolationMode.BILINEAR),
+            #ToRGB(),
+            RandomRotation(45),
             RandomHorizontalFlip(),
             RandomVerticalFlip(),
             CenterCrop(96),
     ])
+    tt = lambda x: torch.from_numpy(np.array(x).astype('float32'))
 
-    
-    train_dataset = dataset['train']
-    train_dataset = train_dataset.set_transform(lambda x: {'image': cpu_augmentations(x['image']), 'spectrum': x['spectrum']})
+    dataset.set_transform(lambda x: {'image': cpu_augmentations(tt(x['image']).transpose(1,3)), 'spectrum': tt(x['spectrum'])})
 
-    train_loader = DataLoader(train_dataset, batch_size=1024, 
+    train_loader = DataLoader(dataset['train'], batch_size=1024, 
                           shuffle=True, num_workers=10, pin_memory=True, 
                           drop_last=True)
 
@@ -83,9 +82,9 @@ def main():
     spectrum_augmentations = SpectrumNoising(std_spectra)
 
     # Build the two model we will be using
-    spectrum_encoder = SpectrumEncoder(n_latent=128, instrument=None, 
+    spectrum_encoder = SpectrumEncoder(n_latent=128, instrument=None,
                                        n_hidden=[256,256], dropout=0.1)
-    
+
     moco_model = Moco_v2.load_from_checkpoint(
                     checkpoint_path='/mnt/home/flanusse/ceph/resnet50.ckpt'
             )
