@@ -13,14 +13,25 @@ class SpecralRegressor(L.LightningModule):
     """ Dedicated regression module from spectra using  an
     mse loss function.
     """
-    def __init__(self, num_features=1):
+    def __init__(self, num_features=1, augmentation=None):
         super().__init__()
         self.backbone = SpectrumEncoder(None, 512)
         self.fc = nn.Linear(512, num_features)
+        self.spectrum_augmentation=augmentation
 
     def forward(self, x):
         net = self.backbone(x)
         return self.fc(net)
+    
+    @torch.no_grad()
+    def on_after_batch_transfer(self, batch, dataloader_idx):
+        sp = batch['spectrum']
+
+        if self.trainer.training:
+            sp = self.spectrum_augmentation(sp) if self.spectrum_augmentation is not None else sp
+
+        batch['spectrum'] = sp
+        return batch
 
     def training_step(self, batch, batch_idx):
         x = batch['spectrum']

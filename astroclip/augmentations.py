@@ -104,9 +104,9 @@ class SpectrumNoising():
         noise = torch.randn_like(spectrum) * self.residual_std.expand_as(spectrum)
 
         # Fake spectrum which is a little bit smoother and with random noise
-        fake_spectrum = spectrum_smooth + noise
+        fake_spectrum = spectrum_smooth[:,:-1] + noise
 
         # Building a linear combination of both versions
-        l = torch.rand(1)
+        l = torch.rand(1, device='cuda')
 
         return l * spectrum + (1 - l) * fake_spectrum
