@@ -1,17 +1,22 @@
 from torch.utils.data import DataLoader
-from lightning.pytorch.callbacks import ModelCheckpoint
-import lightning as L
+
 from datasets import load_dataset
+
+import lightning as L
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import WandbLogger
+
 from astroclip.modules import SpecralRegressor
-from pytorch_lightning.loggers import WandbLogger
 
 
 def main():
     # Instantiate logger
-    wandb_logger = WandbLogger(log_model="all", project="astroclip")
+    wandb_logger = WandbLogger(log_model="all", 
+                               project="astroclip",
+                               name="spectrum2redshift")
 
     # Load dataset
-    dataset = load_dataset('legacy_survey')
+    dataset = load_dataset('EiffL/AstroCLIP')
     dataset.set_format(type='torch', columns=['spectrum', 'redshift'])
 
     train_loader = DataLoader(dataset['train'], batch_size=64, 
@@ -35,7 +40,7 @@ def main():
     
     # Train model
     trainer.fit(model, 
-                train_dataloader=train_loader, 
+                train_dataloaders=train_loader, 
                 val_dataloaders=val_loader)
 
 if __name__ == '__main__':
