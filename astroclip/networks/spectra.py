@@ -35,7 +35,8 @@ class MLP(nn.Sequential):
         for i in range(len(n_) - 1):
             layer.append(nn.Linear(n_[i], n_[i + 1]))
             layer.append(act[i])
-            layer.append(nn.Dropout(p=dropout))
+            if i < len(n_) - 2:
+                layer.append(nn.Dropout(p=dropout))
 
         super(MLP, self).__init__(*layer)
 
