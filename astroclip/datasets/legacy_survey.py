@@ -127,7 +127,7 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
     # method parameters are unpacked from `gen_kwargs` as given in `_split_generators`
     def _generate_examples(self, filepath, split):
         """ Yields examples. """
-        with h5py.File(filepath+'/astroclip_desi.1.1.5.h5') as d:
+        with h5py.File(filepath) as d:
 
             for i in range(10):
                 
