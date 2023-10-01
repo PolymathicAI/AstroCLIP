@@ -14,7 +14,7 @@ from astroclip.augmentations import ToRGB, AddGaussianNoise, SpectrumNoising
 from astroclip.modules import AstroCLIP
 
 import torchvision.models as models
-from torchvision.transforms import Compose, RandomVerticalFlip, RandomHorizontalFlip, RandomRotation, CenterCrop, InterpolationMode, ToTensor
+from torchvision.transforms import Compose, RandomVerticalFlip, RandomHorizontalFlip, RandomRotation, CenterCrop, InterpolationMode
 
 from pl_bolts.models.self_supervised import Moco_v2
 
@@ -43,6 +43,16 @@ class OutputExtractor(L.LightningModule):
     def predict(self, batch, batch_idx: int, dataloader_idx: int=None):
         return self(batch)
 
+class ReorderAndShift():
+    def __call__(self, tensor):
+        tensor = tensor.permute(0, 3, 1, 2)  # Change to [batch_size, nchannel, npix, npix]
+        
+        # Add random shift by a few pixels
+        shift = torch.randint(low=-5, high=5, size=(2,))
+        tensor = torch.roll(tensor, shifts=shift.tolist(), dims=(2, 3))
+        
+        return tensor
+
 def main():
     # Instantiate logger
     wandb_logger = WandbLogger(log_model="all", 
@@ -54,21 +64,6 @@ def main():
                            keep_in_memory=True)
     dataset.set_format(type='torch', columns=['image', 'spectrum'])
 
-    # Setting up image augmentations 
-    gpu_transforms = Compose([
-            AddGaussianNoise(0,0.15),
-    ])
-    cpu_augmentations = Compose([
-            #ToRGB(),
-            RandomRotation(45),
-            RandomHorizontalFlip(),
-            RandomVerticalFlip(),
-            CenterCrop(96),
-    ])
-    tt = lambda x: torch.from_numpy(np.array(x).astype('float32'))
-
-    dataset.set_transform(lambda x: {'image': cpu_augmentations(tt(x['image']).transpose(1,3)), 'spectrum': tt(x['spectrum'])})
-
     train_loader = DataLoader(dataset['train'], batch_size=1024, 
                           shuffle=True, num_workers=10, pin_memory=True, 
                           drop_last=True)
@@ -76,6 +71,16 @@ def main():
     val_loader = DataLoader(dataset['test'], batch_size=1024, 
                         shuffle=False, num_workers=10, pin_memory=True, 
                         drop_last=True)
+
+    # Setting up image augmentations 
+    image_transforms = Compose([
+            ReorderAndShift(),
+            AddGaussianNoise(0, 0.03),
+            RandomRotation(45, interpolation=InterpolationMode.BILINEAR),
+            RandomHorizontalFlip(),
+            RandomVerticalFlip(),
+            CenterCrop(96),
+    ])
 
     # Loading vector with some information for noising the spectra
     std_spectra = np.load('spectra_std.npz')['spectra_npz'].astype('float32')
@@ -96,7 +101,7 @@ def main():
     model = AstroCLIP(image_encoder, 
                       spectrum_encoder,
                       embedding_dim=128,
-                      image_transform=gpu_transforms,
+                      image_transform=image_transforms,
                       spectrum_augmentation=spectrum_augmentations)
 
     # Initialize trainer
