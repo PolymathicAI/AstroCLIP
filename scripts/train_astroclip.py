@@ -54,6 +54,8 @@ class ReorderAndShift():
         return tensor
 
 def main():
+    torch.set_float32_matmul_precision('medium')
+
     # Instantiate logger
     wandb_logger = WandbLogger(log_model="all", 
                            project='astroclip',
