@@ -1,5 +1,6 @@
-import torch 
 import numpy as np
+import torch 
+import torch.nn.functional as F
 
 class ToRGB:
     '''takes in batched image of size (batch_size, npix, npix, nchannel), 
@@ -51,3 +52,61 @@ class AddGaussianNoise(object):
     def __repr__(self):
         return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
     
+
+class SpectrumNoising():
+
+    def __init__(self, 
+                 residual_std, 
+                 smoothing_kernel_std=5.):
+        self.residual_std = torch.from_numpy(residual_std).to('cuda')
+        self.smoothing_kernel_std = smoothing_kernel_std
+        self.kernel = self.gaussian_filter_1d(int(smoothing_kernel_std)*3, smoothing_kernel_std).view(1, 1, -1).to('cuda')
+
+    def gaussian_filter_1d(self, size: int, sigma: float) -> torch.Tensor:
+        """
+        Create a 1D Gaussian filter tensor.
+        
+        Args:
+        - size (int): The size of the filter. It should be an odd number.
+        - sigma (float): The standard deviation of the Gaussian.
+        
+        Returns:
+        - torch.Tensor: A 1D Gaussian filter tensor.
+        """
+        assert size % 2 == 1, "Size should be an odd number."
+        
+        # Create a tensor of size 'size' with values from -size//2 to size//2
+        x = torch.arange(-size // 2, size // 2 + 1, dtype=torch.float32)
+        
+        # Compute the 1D Gaussian filter
+        gaussian = torch.exp(-x**2 / (2 * sigma**2))
+        gaussian /= gaussian.sum()
+        return gaussian
+    
+    @torch.no_grad()
+    def __call__(self, spectrum):
+        """
+        Apply a 1D Gaussian filter to a tensor.
+        
+        Args:
+        - input_tensor (torch.Tensor): The input tensor of shape (batch_size, channels, length).
+        - filter_tensor (torch.Tensor): The 1D Gaussian filter tensor.
+        
+        Returns:
+        - torch.Tensor: The filtered tensor.
+        """
+        spectrum = spectrum.squeeze()
+        
+        # Apply the convolution
+        spectrum_smooth = F.conv1d(spectrum.unsqueeze(1), self.kernel, padding=self.kernel.shape[-1] // 2).squeeze()
+        
+        # Generate fake noise
+        noise = torch.randn_like(spectrum) * self.residual_std.expand_as(spectrum)
+
+        # Fake spectrum which is a little bit smoother and with random noise
+        fake_spectrum = spectrum_smooth[:,:-1] + noise
+
+        # Building a linear combination of both versions
+        l = torch.rand(1, device='cuda')
+
+        return l * spectrum + (1 - l) * fake_spectrum
