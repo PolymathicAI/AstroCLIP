@@ -33,7 +33,7 @@ from datasets import load_dataset
 dset = load_dataset('astroclip/datasets/legacy_survey.py')
 ```
 
-For an example of getting started with this dataset, for example to simply predict redsfhit from the spectra, you can take a look at this notebook  [notebook](notebooks/dev/ConvolutionalPrototyping.ipynb).
+For an example of getting started with this dataset, for example to simply predict redsfhit from the spectra, you can take a look at this [notebook](notebooks/dev/ConvolutionalPrototyping.ipynb).
 
 
 ### Training scripts and model weights 
