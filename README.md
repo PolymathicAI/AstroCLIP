@@ -17,9 +17,12 @@ We encourage you to take a look at our [NeurIPS 2023 AI4Science submission](http
 
 The notebook used to generate the plots of the paper can be found [here](notebooks/PaperPlots.ipynb).
 
-Below is a visulatization of the learned embeddings, by taking the 2 first PCA components of spectra and image embeddings. As one can see, images and spectra discover similar main factors of variations.
+Below is a visualization of the learned embeddings, by taking the 2 first PCA components of spectra and image embeddings. As one can see, images and spectra discover similar main factors of variations.
 ![emb_pca](https://github.com/PolymathicAI/AstroCLIP/assets/861591/01475caa-8628-439b-8553-951074e287e2)
 
+Visualizing the structure of the latent space by UMAP dimensionality reduction further higlights some of its information content. Below is an example of a UMAP of the spectra embeddings:
+
+![image](https://github.com/PolymathicAI/AstroCLIP/assets/861591/0b7bd48a-f29a-4edd-8e0b-1272a51a0d88)
 
 
 ## Products: Datasets and Trained Models
