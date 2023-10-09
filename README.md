@@ -17,6 +17,10 @@ We encourage you to take a look at our [NeurIPS 2023 AI4Science submission](http
 
 The notebook used to generate the plots of the paper can be found [here](notebooks/PaperPlots.ipynb).
 
+Below is a visulatization of the learned embeddings, by taking the 2 first PCA components of spectra and image embeddings. As one can see, images and spectra discover similar main factors of variations.
+![emb_pca](https://github.com/PolymathicAI/AstroCLIP/assets/861591/01475caa-8628-439b-8553-951074e287e2)
+
+
 
 ## Products: Datasets and Trained Models
 
