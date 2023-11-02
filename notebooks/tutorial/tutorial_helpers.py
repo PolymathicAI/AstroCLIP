@@ -52,11 +52,10 @@ def forward(
     pos_emb = self.position_embed(pos)  # to shape (t, embedding_dim)
 
     x = self.dropout(data_emb + pos_emb)
-    embeddings = []
     for block in self.blocks:
         x = block(x)
-        embeddings.append(x.detach().clone())
     x = self.final_layernorm(x)
+    embedding = x.detach().clone()
 
     preds = self.head(x)
     if y is not None:
@@ -66,7 +65,7 @@ def forward(
     else:
         loss = None
 
-    return {"preds": preds, "loss": loss, "embeddings": embeddings}
+    return {"preds": preds, "loss": loss, "embedding": embedding}
 
 def slice(x, section_length=10, overlap=5):
 
@@ -78,7 +77,6 @@ def slice(x, section_length=10, overlap=5):
         sections.pop(-1)  # Discard the last section  
 
     return torch.cat(sections, 1)
-
 
 def fnc(x):
     std, mean = x.std(1, keepdim=True).clip_(0.2), x.mean(1, keepdim=True)
