@@ -33,6 +33,7 @@ from dinov2.data.transforms import (
 import numpy as np
 import h5py
 from PIL import Image as im
+from tqdm import tqdm
 
 from torchvision.transforms import CenterCrop, Normalize
 from torchvision import transforms
@@ -40,6 +41,8 @@ from torchvision import transforms
 import wandb
 from lightning.pytorch.callbacks import ModelCheckpoint,LearningRateMonitor
 from pytorch_lightning.loggers import WandbLogger
+
+import argparse
 
 sns.set()
 sns.set_style("ticks")
@@ -275,6 +278,14 @@ class config:
     opts = []
 
 if __name__ == '__main__':
+    # Set up arg parser for batch size and embedding save directory
+    parser = argparse.ArgumentParser(description='Train AstroCLIP')
+    parser.add_argument('--embedding_dir', type=str, help='Directory to save embeddings')
+    parser.add_argument('--batch_size', type=int, default=256, help='Batch size for training')
+    parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train for')
+    parser.add_argument('--wandb_name', type=str, default='astroclip-clip-align', help='Name of the wandb run')
+    args = parser.parse_args()
+    
     IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
     IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
 
@@ -295,8 +306,8 @@ if __name__ == '__main__':
     dataset.set_format(type='torch', columns=['image', 'spectrum'])
 
     # Create the dataloaders
-    train_dataloader = torch.utils.data.DataLoader(dataset['train'], batch_size=1024, shuffle=True, num_workers=10)
-    val_dataloader = torch.utils.data.DataLoader(dataset['test'], batch_size=1024, shuffle=False, num_workers=10)
+    train_dataloader = torch.utils.data.DataLoader(dataset['test'], batch_size=args.batch_size, shuffle=True, num_workers=10)
+    val_dataloader = torch.utils.data.DataLoader(dataset['test'], batch_size=args.batch_size, shuffle=False, num_workers=10)
 
     # Define Transforms to be used during training
     image_transforms = Compose([
@@ -326,10 +337,6 @@ if __name__ == '__main__':
     
     # Modify the forward to output all of the embeddings
     spec_model.forward = forward.__get__(spec_model, type(img_model))
-
-    # Add the decoder to the spectrum transformer
-    my_decoder = seq_decoder(model=spec_model)      
-
     num_params = np.sum(np.fromiter((p.numel() for p in my_decoder.parameters()), int))
     print(f"Number of parameters in spectrum model: {num_params:,}")
     
@@ -345,7 +352,7 @@ if __name__ == '__main__':
     lr_monitor = LearningRateMonitor(logging_interval='step') 
 
     trainer = L.Trainer(
-            max_epochs=-1,
+            max_epochs=args.epochs,
             logger=wandb_logger,
             callbacks=[
                 lr_monitor,
@@ -361,4 +368,23 @@ if __name__ == '__main__':
             train_dataloaders=train_dataloader,
             val_dataloaders=val_dataloader)
     
-    
+    CLIP.cuda()
+
+    im_embeddings = []
+    sp_embeddings = []
+
+    with torch.no_grad():
+        for batch_test in tqdm(val_dataloader): 
+            im = image_transforms(batch_test['image']).cuda()
+            sp = batch_test['spectrum'].squeeze().cuda()
+            im_embeddings.append(CLIP(im).detach().cpu().numpy())
+            sp_embeddings.append(CLIP(sp, False).detach().cpu().numpy())
+
+    image_features = np.concatenate(im_embeddings)
+    spectrum_features = np.concatenate(sp_embeddings)
+
+    image_features_normed = image_features / np.linalg.norm(image_features, axis=-1, keepdims=True)
+    spectrum_features_normed = spectrum_features / np.linalg.norm(spectrum_features, axis=-1, keepdims=True)
+
+    np.save(f'{args.embedding_dir}/image_features_normed', image_features_normed)
+    np.save(f'{args.embedding_dir}/spectrum_features_normed', spectrum_features_normed)

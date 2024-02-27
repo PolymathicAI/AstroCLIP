@@ -14,4 +14,7 @@ module load cuda
 module load python
 source /mnt/home/lparker/python_envs/dino/bin/activate
 
-python clip_dino_training_attblock.py
+$JOB_NAME = "logitatt"
+$EMBEDDING_DIR = "/mnt/home/lparker/ceph/bad_embeddings"
+
+python clip_dino_training_attblock.py --embedding_dir $EMBEDDING_DIR --wandb_name $JOB_NAME --epochs 100
