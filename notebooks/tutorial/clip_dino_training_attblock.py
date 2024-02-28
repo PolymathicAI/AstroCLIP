@@ -44,9 +44,14 @@ from pytorch_lightning.loggers import WandbLogger
 
 import argparse
 
-sns.set()
-sns.set_style("ticks")
-sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2})
+MEAN = (0.485, 0.456, 0.406) # Imagenet default mean
+STD = (0.229, 0.224, 0.225) # Imagenet default std
+
+def make_normalize_transform(mean = MEAN, std  = STD) -> transforms.Normalize:
+    return transforms.Normalize(mean=mean, std=std)
+
+crop = CenterCrop(144)
+normalize = make_normalize_transform(mean=MEAN, std=STD)
 
 # Specify where you want the data to be saved locally
 CACHE_DIR = '/mnt/ceph/users/lparker/datasets_astroclip'
@@ -270,6 +275,29 @@ class AstroCLIP(L.LightningModule):
             'frequency': 1,  # how often to apply
         }
     }
+    
+def generate_embeddings(model, loader, device='cuda'):
+    model.to(device)
+    im_embeddings = []
+    sp_embeddings = []
+    targetids = []
+    with torch.no_grad():
+        for batch in tqdm(val_dataloader): 
+            im = image_transforms(batch['image']).to(device)
+            sp = batch['spectrum'].squeeze().to(device)
+            im_embeddings.append(CLIP(im).detach().cpu().numpy())
+            sp_embeddings.append(CLIP(sp, False).detach().cpu().numpy())
+            targetids.append(batch['targetid'].detach().cpu().numpy())
+    image_features = np.concatenate(im_embeddings)
+    spectrum_features = np.concatenate(sp_embeddings)
+    targetids = np.concatenate(targetids)
+
+    image_features_normed = image_features / np.linalg.norm(image_features, axis=-1, keepdims=True)
+    spectrum_features_normed = spectrum_features / np.linalg.norm(spectrum_features, axis=-1, keepdims=True)
+
+    return {'image_features': image_features_normed, 
+            'spectrum_features': spectrum_features_normed, 
+            'targetid': targetids}
 
 class config:
     output_dir = '/mnt/home/lparker/ceph/dino_training'
@@ -280,33 +308,18 @@ class config:
 if __name__ == '__main__':
     # Set up arg parser for batch size and embedding save directory
     parser = argparse.ArgumentParser(description='Train AstroCLIP')
-    parser.add_argument('--embedding_dir', type=str, help='Directory to save embeddings')
-    parser.add_argument('--batch_size', type=int, default=256, help='Batch size for training')
+    parser.add_argument('--embedding_file', type=str, help='Directory to save embeddings')
+    parser.add_argument('--batch_size', type=int, default=1024, help='Batch size for training')
     parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train for')
     parser.add_argument('--wandb_name', type=str, default='astroclip-clip-align', help='Name of the wandb run')
     args = parser.parse_args()
     
-    IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
-    IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
-
-    MEAN = IMAGENET_DEFAULT_MEAN
-    STD = IMAGENET_DEFAULT_STD
-
-    def make_normalize_transform(
-        mean = MEAN,
-        std  = STD,
-    ) -> transforms.Normalize:
-        return transforms.Normalize(mean=mean, std=std)
-
-    crop = CenterCrop(144)
-    normalize = make_normalize_transform(mean=MEAN, std=STD)
-    
     # Load the dataset from Huggingface
-    dataset = load_dataset('../../astroclip/datasets/legacy_survey.py', cache_dir=CACHE_DIR)
-    dataset.set_format(type='torch', columns=['image', 'spectrum'])
+    dataset = load_dataset('/mnt/home/lparker/Documents/AstroFoundationModel/AstroCLIP/astroclip_datasets/legacy_survey.py', cache_dir=CACHE_DIR)
+    dataset.set_format(type='torch', columns=['image', 'spectrum', 'targetid'])
 
     # Create the dataloaders
-    train_dataloader = torch.utils.data.DataLoader(dataset['test'], batch_size=args.batch_size, shuffle=True, num_workers=10)
+    train_dataloader = torch.utils.data.DataLoader(dataset['train'], batch_size=args.batch_size, shuffle=True, num_workers=10)
     val_dataloader = torch.utils.data.DataLoader(dataset['test'], batch_size=args.batch_size, shuffle=False, num_workers=10)
 
     # Define Transforms to be used during training
@@ -324,9 +337,6 @@ if __name__ == '__main__':
     # Extract encoder_q from Moco_v2 model
     model.forward = forward_im.__get__(model)
     img_model = OutputExtractor(model)
-
-    num_params = np.sum(np.fromiter((p.numel() for p in img_model.parameters()), int))
-    print(f"Number of parameters in image model: {num_params:,}")
     
     # The model is saved in the Seqformer branch of Fi-LLM
     model_path = "/mnt/home/sgolkar/ceph/saves/fillm/run-seqformer-2708117"
@@ -337,20 +347,17 @@ if __name__ == '__main__':
     
     # Modify the forward to output all of the embeddings
     spec_model.forward = forward.__get__(spec_model, type(img_model))
-    num_params = np.sum(np.fromiter((p.numel() for p in my_decoder.parameters()), int))
-    print(f"Number of parameters in spectrum model: {num_params:,}")
     
-    # Define image and spectrum encoders
+    # Define image and spectrum encoders and the AstroCLIP model
     image_encoder = img_model
     spectrum_encoder = seq_decoder(model=spec_model)   
-
     CLIP = AstroCLIP(image_encoder, spectrum_encoder)
     
-    wandb.finish()
-
+    # Set up WANDB
     wandb_logger = WandbLogger(project="astroclip-clip-align", entity="flatiron-scipt", name="dino_run_logit_attblock")
     lr_monitor = LearningRateMonitor(logging_interval='step') 
 
+    # Define Trainer
     trainer = L.Trainer(
             max_epochs=args.epochs,
             logger=wandb_logger,
@@ -363,28 +370,28 @@ if __name__ == '__main__':
                 )],
                 )
     
+    # Train the model
     torch.set_float32_matmul_precision('medium')
     trainer.fit(model=CLIP, 
             train_dataloaders=train_dataloader,
             val_dataloaders=val_dataloader)
+        
+    # Generate features over the train and embedding sets
+    train_features = generate_embeddings(CLIP, train_dataloader)
+    test_features = generate_embeddings(CLIP, val_dataloader)
     
-    CLIP.cuda()
+    if not os.path.exists(args.embedding_file):
+        os.makedirs(args.embedding_file)
+        
+    with h5py.File(args.embedding_file, 'w') as f:
+        train = f.create_group('train')
+        test = f.create_group('test')
+        train.create_dataset('targetid', data=train_features['targetid'])
+        train.create_dataset('image_features', data=train_features['image_features'])
+        train.create_dataset('spectrum_features', data=train_features['spectrum_features'])
+        test.create_dataset('targetid', data=test_features['targetid'])
+        test.create_dataset('image_features', data=test_features['image_features'])
+        test.create_dataset('spectrum_features', data=test_features['spectrum_features'])
 
-    im_embeddings = []
-    sp_embeddings = []
 
-    with torch.no_grad():
-        for batch_test in tqdm(val_dataloader): 
-            im = image_transforms(batch_test['image']).cuda()
-            sp = batch_test['spectrum'].squeeze().cuda()
-            im_embeddings.append(CLIP(im).detach().cpu().numpy())
-            sp_embeddings.append(CLIP(sp, False).detach().cpu().numpy())
-
-    image_features = np.concatenate(im_embeddings)
-    spectrum_features = np.concatenate(sp_embeddings)
-
-    image_features_normed = image_features / np.linalg.norm(image_features, axis=-1, keepdims=True)
-    spectrum_features_normed = spectrum_features / np.linalg.norm(spectrum_features, axis=-1, keepdims=True)
-
-    np.save(f'{args.embedding_dir}/image_features_normed', image_features_normed)
-    np.save(f'{args.embedding_dir}/spectrum_features_normed', spectrum_features_normed)
+    
