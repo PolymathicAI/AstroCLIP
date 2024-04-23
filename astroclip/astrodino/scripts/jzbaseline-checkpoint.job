@@ -1,0 +1,42 @@
+#!/bin/bash
+#SBATCH --job-name=astrodino    # name of job
+# Other partitions are usable by activating/uncommenting
+# one of the 5 following directives:
+##SBATCH -C v100-16g                 # uncomment to target only 16GB V100 GPU
+##SBATCH -C v100-32g                 # uncomment to target only 32GB V100 GPU
+##SBATCH --partition=gpu_p2          # uncomment for gpu_p2 partition (32GB V100 GPU)
+##SBATCH --partition=gpu_p4          # uncomment for gpu_p4 partition (40GB A100 GPU)
+#SBATCH -C a100                      # uncomment for gpu_p5 partition (80GB A100 GPU)
+# Here, reservation of 8x10=80 CPUs (4 tasks per node) and 8 GPUs (4 GPUs per node) on 2 nodes:
+#SBATCH --ntasks=32                  # total number of MPI tasks
+#SBATCH --ntasks-per-node=8          # number of MPI tasks per node (= number of GPUs per node)
+#SBATCH --gres=gpu:8                 # number of GPUs per node (max 8 with gpu_p2, gpu_p4, gpu_p5)
+# The number of CPUs per task must be adapted according to the partition used. Knowing that here
+# only one GPU per task is reserved (i.e. 1/4 or 1/8 of the GPUs of the node depending
+# on the partition), the ideal is to reserve 1/4 or 1/8 of the CPUs of the node for each task:
+##SBATCH --cpus-per-task=10          # number of cores per task (a quarter of the node here)
+##SBATCH --cpus-per-task=3           # number of cores per task for gpu_p2 (1/8 of the 8-GPUs node)
+##SBATCH --cpus-per-task=6            # number of cores per task for gpu_p4 (1/8 of the 8-GPUs node)
+#SBATCH --cpus-per-task=8           # number of cores per task for gpu_p5 (1/8 of the 8-GPUs node)
+# /!\ Caution: In Slurm vocabulary, "multithread" refers to hyperthreading. 
+#SBATCH --hint=nomultithread         # hyperthreading deactivated 
+#SBATCH --time=00:10:00              # maximum execution time requested (HH:MM:SS)
+#SBATCH --output=astrodino%j.out # name of output file
+#SBATCH --error=astrodino%j.out  # name of error file (here, common with the output file)
+ 
+# Cleans out modules loaded in interactive and inherited by default
+module purge
+ 
+# Uncomment the following module command if you are using the "gpu_p5" partition
+# to have access to the modules compatible with this partition.
+module load cpuarch/amd
+ 
+# Loads modules
+module load pytorch-gpu/py3/2.0.1
+ 
+export PYTHONPATH=$PYTHONPATH:dinov2
+
+# Echo of launched commands
+set -x
+
+srun python astrodino/train/train.py --config-file="astrodino/configs/ssl_default_config.yaml" --output-dir=/gpfsscratch/rech/heq/commun/

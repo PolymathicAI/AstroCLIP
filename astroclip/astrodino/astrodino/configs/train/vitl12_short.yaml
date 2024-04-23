@@ -1,0 +1,5 @@
+# this corresponds to the default config
+train:
+  batch_size_per_gpu: 64
+student:
+  block_chunks: 4
