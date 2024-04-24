@@ -10,3 +10,10 @@ pip install --upgrade pip
 pip install --upgrade eventlet torch lightning[extra]
 pip install -e .
 ```
+
+### Spectrum encoder:
+
+Run with 
+```
+spectrum_trainer -c astroclip/specformer/config.yaml
+```
