@@ -1,6 +1,9 @@
 #!/usr/bin/env python
-from lightning.pytorch.cli import ArgsType, LightningCLI
-from lightning import LightningModule, Callback, Trainer
+from typing import Any, Optional
+
+import matplotlib.pyplot as plt
+import wandb
+from lightning import Callback, LightningModule, Trainer
 from lightning.pytorch.cli import (
     ArgsType,
     LightningArgumentParser,
@@ -8,15 +11,10 @@ from lightning.pytorch.cli import (
     LRSchedulerTypeUnion,
 )
 from lightning.pytorch.loggers import WandbLogger
-import wandb
-
 from torch.optim import Optimizer
-from typing import Any, Optional
-import matplotlib.pyplot as plt
 
-
-from astroclip.specformer.utils import CustomSaveConfigCallback
 from astroclip import format_with_env
+from astroclip.specformer.utils import CustomSaveConfigCallback
 
 
 class WrappedLightningCLI(LightningCLI):
@@ -44,7 +42,6 @@ class WrappedLightningCLI(LightningCLI):
 
 
 class PlotsCallback(Callback):
-
     def __init__(self) -> None:
         super().__init__()
 

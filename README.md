@@ -13,7 +13,7 @@ pip install -e .
 
 ### Spectrum encoder:
 
-Run with 
+Run with
 ```
 spectrum_trainer -c astroclip/specformer/config.yaml
 ```

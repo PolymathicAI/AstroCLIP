@@ -1,8 +1,9 @@
-from omegaconf import OmegaConf, DictConfig
+from typing import Union
+
+from lightning import LightningModule, Trainer
 from lightning.pytorch.cli import SaveConfigCallback
 from lightning.pytorch.loggers import WandbLogger
-from lightning import LightningModule, Trainer
-from typing import Union
+from omegaconf import DictConfig, OmegaConf
 
 
 def _safe_eval(s: str, max_len: int = 1024) -> Union[int, float]:
@@ -33,7 +34,8 @@ OmegaConf.register_new_resolver("eval", _safe_eval, use_cache=True)
 
 class CustomWandbLogger(WandbLogger):
     # Disable unintended hyperparameter logging (already saved on init)
-    def log_hyperparams(self, *args, **kwargs): ...
+    def log_hyperparams(self, *args, **kwargs):
+        ...
 
 
 class CustomSaveConfigCallback(SaveConfigCallback):

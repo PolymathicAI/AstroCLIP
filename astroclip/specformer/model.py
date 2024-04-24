@@ -1,14 +1,13 @@
 import lightning as L
+import torch.nn as nn
+import torch.nn.functional as F
 from lightning.pytorch.core.optimizer import LightningOptimizer
 from torch.optim.adamw import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
-import torch.nn as nn
-import torch.nn.functional as F
 from torch.optim.optimizer import Optimizer
 
 
 class SpecFormer(L.LightningModule):
-
     def __init__(
         self,
         input_dim: int,

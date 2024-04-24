@@ -4,7 +4,6 @@ from torch.utils.data import default_collate
 
 
 def slice(x, section_length=10, overlap=5):
-
     start_indices = np.arange(0, len(x) - overlap, section_length - overlap)
     sections = [x[start : start + section_length] for start in start_indices]
 
