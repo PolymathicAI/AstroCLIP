@@ -18,22 +18,22 @@
 ##SBATCH --cpus-per-task=3           # number of cores per task for gpu_p2 (1/8 of the 8-GPUs node)
 ##SBATCH --cpus-per-task=6            # number of cores per task for gpu_p4 (1/8 of the 8-GPUs node)
 #SBATCH --cpus-per-task=8           # number of cores per task for gpu_p5 (1/8 of the 8-GPUs node)
-# /!\ Caution: In Slurm vocabulary, "multithread" refers to hyperthreading. 
-#SBATCH --hint=nomultithread         # hyperthreading deactivated 
+# /!\ Caution: In Slurm vocabulary, "multithread" refers to hyperthreading.
+#SBATCH --hint=nomultithread         # hyperthreading deactivated
 #SBATCH --time=00:10:00              # maximum execution time requested (HH:MM:SS)
 #SBATCH --output=astrodino%j.out # name of output file
 #SBATCH --error=astrodino%j.out  # name of error file (here, common with the output file)
- 
+
 # Cleans out modules loaded in interactive and inherited by default
 module purge
- 
+
 # Uncomment the following module command if you are using the "gpu_p5" partition
 # to have access to the modules compatible with this partition.
 module load cpuarch/amd
- 
+
 # Loads modules
 module load pytorch-gpu/py3/2.0.1
- 
+
 export PYTHONPATH=$PYTHONPATH:dinov2
 
 # Echo of launched commands

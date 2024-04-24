@@ -14,12 +14,12 @@ module load python
 module load cuda
 source /mnt/home/lparker/python_envs/dino/bin/activate
 
-# --- SPECIFY THE FOLLOWING --- 
+# --- SPECIFY THE FOLLOWING ---
 
 run_name="custom_cp"
 config="astrodino/configs/ssl_default_config.yaml"
 
-# ----------------------------- 
+# -----------------------------
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export PYTHONPATH=/mnt/home/flanusse/.local/lib/python3.10/site-packages:/mnt/home/lparker/Documents/AstroFoundationModel/AstroDino/dinov2/
@@ -28,4 +28,3 @@ srun python -m astrodino.train.train \
     --config-file=$config \
     --output-dir=/mnt/home/lparker/ceph/astrodino/$run_name \
     --run-name=$run_name \
-

@@ -2,31 +2,36 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
-    
+
+
 class ResNet18(nn.Module):
     """
     ResNet18 neural network for galaxy image processing.
-    
+
     """
+
     def __init__(self, num_classes=1):
-        
         super(ResNet18, self).__init__()
         self.resnet = models.resnet18(weights=None)
-        self.resnet.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.resnet.conv1 = nn.Conv2d(
+            3, 64, kernel_size=7, stride=2, padding=3, bias=False
+        )
         self.resnet.fc = nn.Linear(512, num_classes)
 
     def forward(self, x):
-        return self.resnet(x)    
-    
+        return self.resnet(x)
+
+
 class SimpleMLP(nn.Module):
     """
     Simple MLP for CLIP feature few-shot regression
     """
+
     def __init__(self, input_dim=128, output_dim=1, hidden_dim=64):
         super(SimpleMLP, self).__init__()
-        self.fc1 = nn.Linear(input_dim,hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim,int(hidden_dim/2))
-        self.fc3 = nn.Linear(int(hidden_dim/2), output_dim)
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, int(hidden_dim / 2))
+        self.fc3 = nn.Linear(int(hidden_dim / 2), output_dim)
         self.relu = nn.ReLU()
 
     def forward(self, x):
@@ -34,7 +39,8 @@ class SimpleMLP(nn.Module):
         x = self.relu(self.fc2(x))
         x = self.fc3(x)
         return x.squeeze()
-    
+
+
 class MLP(nn.Sequential):
     """Multi-Layer Perceptron
 
@@ -57,7 +63,6 @@ class MLP(nn.Sequential):
     """
 
     def __init__(self, n_in, n_out, n_hidden=(16, 16, 16), act=None, dropout=0):
-
         if act is None:
             act = [
                 nn.LeakyReLU(),
@@ -98,13 +103,10 @@ class SpectrumEncoder(nn.Module):
         Dropout probability
     """
 
-    def __init__(
-        self, n_latent, n_hidden=(32, 32), act=None, dropout=0
-    ):
-
+    def __init__(self, n_latent, n_hidden=(32, 32), act=None, dropout=0):
         super(SpectrumEncoder, self).__init__()
         self.n_latent = n_latent
-        
+
         filters = [8, 16, 16, 32]
         sizes = [5, 10, 20, 40]
         self.conv1, self.conv2, self.conv3, self.conv4 = self._conv_blocks(
@@ -123,7 +125,9 @@ class SpectrumEncoder(nn.Module):
             act = [nn.PReLU(n) for n in n_hidden]
             # last activation identity to have latents centered around 0
             act.append(nn.Identity())
-        self.mlp = MLP(self.n_feature, self.n_latent, n_hidden=n_hidden, act=act, dropout=dropout)
+        self.mlp = MLP(
+            self.n_feature, self.n_latent, n_hidden=n_hidden, act=act, dropout=dropout
+        )
 
     def _conv_blocks(self, filters, sizes, dropout=0):
         convs = []

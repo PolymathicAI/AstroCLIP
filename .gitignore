@@ -170,3 +170,4 @@ notebooks/dev.ipynb
 config.yaml
 *ckpt
 .vscode
+.local

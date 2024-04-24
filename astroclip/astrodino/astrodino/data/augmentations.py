@@ -4,16 +4,11 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import logging
-
-from torchvision import transforms
 from typing import Sequence
 
-from dinov2.data.transforms import (
-    GaussianBlur,
-    make_normalize_transform,
-)
-
 import torch
+from dinov2.data.transforms import GaussianBlur, make_normalize_transform
+from torchvision import transforms
 
 logger = logging.getLogger("dinov2")
 
@@ -21,23 +16,26 @@ logger = logging.getLogger("dinov2")
 DESI_DEFAULT_MEAN = (0.0064, 0.0123, 0.0156)
 DESI_DEFAULT_STD = (0.1492, 0.2007, 0.1972)
 
+
 def make_normalize_transform(
     mean: Sequence[float] = DESI_DEFAULT_MEAN,
     std: Sequence[float] = DESI_DEFAULT_STD,
 ) -> transforms.Normalize:
     return transforms.Normalize(mean=mean, std=std)
 
+
 # Radial position encoding
 def generate_radial_position_encoding_torch(height, width, scale=0.1):
     # Generate a grid of coordinates corresponding to the image pixels
     x = torch.linspace(-scale, scale, steps=width)
     y = torch.linspace(-scale, scale, steps=height)
-    xv, yv = torch.meshgrid(x, y, indexing='ij')
-    
+    xv, yv = torch.meshgrid(x, y, indexing="ij")
+
     # Compute the distance of each pixel from the center
     radial_dist = torch.sqrt(xv**2 + yv**2)
-    
+
     return radial_dist
+
 
 class DataAugmentationAstroDINO(object):
     def __init__(
@@ -67,7 +65,9 @@ class DataAugmentationAstroDINO(object):
         self.geometric_augmentation_global = transforms.Compose(
             [
                 transforms.RandomResizedCrop(
-                    global_crops_size, scale=global_crops_scale, interpolation=transforms.InterpolationMode.BICUBIC
+                    global_crops_size,
+                    scale=global_crops_scale,
+                    interpolation=transforms.InterpolationMode.BICUBIC,
                 ),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomVerticalFlip(p=0.5),
@@ -77,7 +77,9 @@ class DataAugmentationAstroDINO(object):
         self.geometric_augmentation_local = transforms.Compose(
             [
                 transforms.RandomResizedCrop(
-                    local_crops_size, scale=local_crops_scale, interpolation=transforms.InterpolationMode.BICUBIC
+                    local_crops_size,
+                    scale=local_crops_scale,
+                    interpolation=transforms.InterpolationMode.BICUBIC,
                 ),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomVerticalFlip(p=0.5),
@@ -88,7 +90,11 @@ class DataAugmentationAstroDINO(object):
         color_jittering = transforms.Compose(
             [
                 transforms.RandomApply(
-                    [transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1)],
+                    [
+                        transforms.ColorJitter(
+                            brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
+                        )
+                    ],
                     p=0.8,
                 ),
                 transforms.RandomGrayscale(p=0.2),
@@ -100,31 +106,29 @@ class DataAugmentationAstroDINO(object):
         global_transfo2_extra = transforms.Compose(
             [
                 GaussianBlur(p=0.1),
-                #transforms.RandomSolarize(threshold=128, p=0.2),
+                # transforms.RandomSolarize(threshold=128, p=0.2),
             ]
         )
 
         local_transfo_extra = GaussianBlur(p=0.5)
 
         # normalization
-        
-        self.to_tensor = transforms.Compose([
-            transforms.ToTensor()
-            ]
-        )
-        
+
+        self.to_tensor = transforms.Compose([transforms.ToTensor()])
+
         self.normalize = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                make_normalize_transform()
-            ]
+            [transforms.ToTensor(), make_normalize_transform()]
         )
-        
+
         # We just remove color jittering here
-        self.global_transfo1 = transforms.Compose([global_transfo1_extra, self.normalize])
-        self.global_transfo2 = transforms.Compose([global_transfo2_extra, self.normalize])
+        self.global_transfo1 = transforms.Compose(
+            [global_transfo1_extra, self.normalize]
+        )
+        self.global_transfo2 = transforms.Compose(
+            [global_transfo2_extra, self.normalize]
+        )
         self.local_transfo = transforms.Compose([local_transfo_extra, self.normalize])
-        
+
     def __call__(self, image):
         output = {}
 
@@ -142,7 +146,8 @@ class DataAugmentationAstroDINO(object):
 
         # local crops:
         local_crops = [
-            self.local_transfo(self.geometric_augmentation_local(image)) for _ in range(self.local_crops_number)
+            self.local_transfo(self.geometric_augmentation_local(image))
+            for _ in range(self.local_crops_number)
         ]
         output["local_crops"] = local_crops
         output["offsets"] = ()

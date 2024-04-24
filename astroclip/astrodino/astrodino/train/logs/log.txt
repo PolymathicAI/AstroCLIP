@@ -2,7 +2,7 @@ I20231117 14:01:30 34894 dinov2 config.py:59] git:
   sha: da4b3825f0ed64b7398ace00c5062503811d0cff, status: has uncommitted changes, branch: main
 
 I20231117 14:01:30 34894 dinov2 config.py:60] config_file: ../configs/ssl_default_config.yaml
-eval: 
+eval:
 eval_only: False
 f: /dev/shm/2994725/kernel-90b4bbe3-31f9-40ca-bb65-4eee2c2de061.json
 no_resume: False
@@ -3746,7 +3746,7 @@ I20231117 16:01:29 153379 dinov2 config.py:59] git:
   sha: da4b3825f0ed64b7398ace00c5062503811d0cff, status: has uncommitted changes, branch: main
 
 I20231117 16:01:29 153379 dinov2 config.py:60] config_file: ../configs/ssl_default_config.yaml
-eval: 
+eval:
 eval_only: False
 f: /dev/shm/2994725/kernel-90b4bbe3-31f9-40ca-bb65-4eee2c2de061.json
 no_resume: False
@@ -4266,7 +4266,7 @@ I20231121 15:52:30 100807 dinov2 config.py:59] git:
   sha: da4b3825f0ed64b7398ace00c5062503811d0cff, status: has uncommitted changes, branch: main
 
 I20231121 15:52:30 100807 dinov2 config.py:60] config_file: ../configs/ssl_default_config.yaml
-eval: 
+eval:
 eval_only: False
 f: /dev/shm/3009517/kernel-46b0e621-8452-4965-8f69-ac03014fdb02.json
 no_resume: False

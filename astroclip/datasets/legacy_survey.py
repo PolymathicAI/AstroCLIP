@@ -13,20 +13,18 @@
 # limitations under the License.
 """Joint dataset of DESI Legacy Survey and DESI Early Data Release."""
 
-import json
-import os
-import glob
 import h5py
-import datasets
 import numpy as np
+
+import datasets
 
 _CITATION = """
 """
 
 _DESCRIPTION = """\
-This dataset is designed for cross-modal learning between images and spectra of galaxies 
+This dataset is designed for cross-modal learning between images and spectra of galaxies
 contained in the DESI Early Data Release and the Legacy Survey DR9. It contains roughly 150k
-examples of images and spectra of galaxies, with their redshifts and targetids.  
+examples of images and spectra of galaxies, with their redshifts and targetids.
 """
 
 # TODO: Add a link to an official homepage for the dataset here
@@ -41,13 +39,18 @@ _URLS = {
     "joint": "https://users.flatironinstitute.org/~flanusse/astroclip_desi.1.1.5.h5",
 }
 
+
 class DesiSSL(datasets.GeneratorBasedBuilder):
     """TODO: Short description of my dataset."""
 
     VERSION = datasets.Version("1.1.5")
 
     BUILDER_CONFIGS = [
-        datasets.BuilderConfig(name="joint", version=VERSION, description="This part of the dataset covers examples from both specral and image domains"),
+        datasets.BuilderConfig(
+            name="joint",
+            version=VERSION,
+            description="This part of the dataset covers examples from both specral and image domains",
+        ),
     ]
 
     DEFAULT_CONFIG_NAME = "joint"
@@ -56,15 +59,17 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
         if self.config.name == "joint":
             features = datasets.Features(
                 {
-                    "image": datasets.Array3D(shape=(96, 96, 3), dtype='float32'),
-                    "spectrum": datasets.Array2D(shape=(7781,1), dtype='float32'),
+                    "image": datasets.Array3D(shape=(96, 96, 3), dtype="float32"),
+                    "spectrum": datasets.Array2D(shape=(7781, 1), dtype="float32"),
                     "redshift": datasets.Value("float32"),
-                    "targetid": datasets.Value("int64")
+                    "targetid": datasets.Value("int64"),
                 }
             )
         else:
-            raise NotImplementedError("Only the joint configuration is implemented for now")
-        
+            raise NotImplementedError(
+                "Only the joint configuration is implemented for now"
+            )
+
         return datasets.DatasetInfo(
             description=_DESCRIPTION,
             features=features,
@@ -87,40 +92,36 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.TEST,
-                gen_kwargs={
-                    "filepath": data_dir,
-                    "split": "test"
-                },
+                gen_kwargs={"filepath": data_dir, "split": "test"},
             ),
         ]
 
     def _generate_examples(self, filepath, split):
-        """ Yields examples. """
+        """Yields examples."""
         with h5py.File(filepath) as d:
-
             # Each file contains 10 groups, each with images, spectra, redshifts and targetids
             for i in range(10):
-                images = d[str(i)]['images']
-                spectra = d[str(i)]['spectra']
-                redshifts = d[str(i)]['redshifts']
-                targetids = d[str(i)]['targetids']
+                images = d[str(i)]["images"]
+                spectra = d[str(i)]["spectra"]
+                redshifts = d[str(i)]["redshifts"]
+                targetids = d[str(i)]["targetids"]
 
                 dset_size = len(targetids)
 
-                if split == 'train':
+                if split == "train":
                     # 90% of the dataset is used for training
-                    dset_range = (0, int(0.9*dset_size))
+                    dset_range = (0, int(0.9 * dset_size))
                 else:
                     # 10% of the dataset is used for testing
-                    dset_range = (int(0.9*dset_size), dset_size)
+                    dset_range = (int(0.9 * dset_size), dset_size)
 
                 for j in range(dset_range[0], dset_range[1]):
                     # Crop the images to 96x96
                     crop_image = images[j][28:124, 28:124, :]
 
                     yield str(targetids[j]), {
-                        "image": np.array(crop_image).astype('float32'),
-                        "spectrum": np.reshape(spectra[j], [-1, 1]).astype('float32'),
+                        "image": np.array(crop_image).astype("float32"),
+                        "spectrum": np.reshape(spectra[j], [-1, 1]).astype("float32"),
                         "redshift": redshifts[j],
                         "targetid": targetids[j],
                     }
