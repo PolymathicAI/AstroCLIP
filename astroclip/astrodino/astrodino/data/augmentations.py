@@ -12,14 +12,14 @@ from torchvision import transforms
 
 logger = logging.getLogger("dinov2")
 
-# Mean and Std taken over first 20,000 DESI images in AstroCLIP paired dataset
-DESI_DEFAULT_MEAN = (0.0064, 0.0123, 0.0156)
-DESI_DEFAULT_STD = (0.1492, 0.2007, 0.1972)
+# ImageNet normalization
+MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 
 
+# Normalization Transforms
 def make_normalize_transform(
-    mean: Sequence[float] = DESI_DEFAULT_MEAN,
-    std: Sequence[float] = DESI_DEFAULT_STD,
+    mean: Sequence[float] = MEAN,
+    std: Sequence[float] = STD,
 ) -> transforms.Normalize:
     return transforms.Normalize(mean=mean, std=std)
 
@@ -40,12 +40,22 @@ def generate_radial_position_encoding_torch(height, width, scale=0.1):
 class DataAugmentationAstroDINO(object):
     def __init__(
         self,
-        global_crops_scale,
-        local_crops_scale,
-        local_crops_number,
-        global_crops_size=224,
-        local_crops_size=96,
+        global_crops_scale: float,
+        local_crops_scale: float,
+        local_crops_number: float,
+        global_crops_size: float = 224,
+        local_crops_size: float = 96,
     ):
+        """
+        The data augmentation pipeline for AstroDINO.
+
+        Args:
+            global_crops_scale: The scale of the global crops.
+            local_crops_scale: The scale of the local crops.
+            local_crops_number: The number of local crops.
+            global_crops_size: The size of the global crops.
+            local_crops_size: The size of the local crops.
+        """
         self.global_crops_scale = global_crops_scale
         self.local_crops_scale = local_crops_scale
         self.local_crops_number = local_crops_number
@@ -86,33 +96,15 @@ class DataAugmentationAstroDINO(object):
             ]
         )
 
-        # color distorsions / blurring
-        color_jittering = transforms.Compose(
-            [
-                transforms.RandomApply(
-                    [
-                        transforms.ColorJitter(
-                            brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
-                        )
-                    ],
-                    p=0.8,
-                ),
-                transforms.RandomGrayscale(p=0.2),
-            ]
-        )
-
         global_transfo1_extra = GaussianBlur(p=1.0)
 
         global_transfo2_extra = transforms.Compose(
             [
                 GaussianBlur(p=0.1),
-                # transforms.RandomSolarize(threshold=128, p=0.2),
             ]
         )
 
         local_transfo_extra = GaussianBlur(p=0.5)
-
-        # normalization
 
         self.to_tensor = transforms.Compose([transforms.ToTensor()])
 
