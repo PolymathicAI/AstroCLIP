@@ -1,0 +1,51 @@
+seed_everything: 42
+trainer:
+  default_root_dir: "{ASTROCLIP_ROOT}/outputs"
+  enable_checkpointing: true
+  gradient_clip_val: 1.
+  max_epochs: 10
+  precision: null
+  check_val_every_n_epoch: 1
+  callbacks:
+    - class_path: LearningRateMonitor
+      init_args:
+        logging_interval: "step"
+    - class_path: ModelCheckpoint
+      init_args:
+        save_last: link
+    - class_path: PlotsCallback
+  logger:
+    class_path: CustomWandbLogger
+    init_args:
+      project: "astroclip-spectrum"
+      entity: "{WANDB_ENTITY_NAME}"
+      save_dir: ${trainer.default_root_dir}
+model:
+  class_path: SpecFormer
+  init_args:
+    input_dim: 196
+    embed_dim: 192
+    num_layers: 3
+    num_heads: 3
+    max_len: 80
+    dropout: 0.1
+    norm_first: False
+data:
+  class_path: AstroClipDataset
+  init_args:
+    path: "{ASTROCLIP_ROOT}/datasets/astroclip_file/"
+    columns:
+      - spectrum
+    batch_size: 128
+    num_workers: 0
+    collate_fn: astroclip.specformer.preprocessing.spectrum_collate_fn
+optimizer:
+  class_path: torch.optim.adamw.AdamW
+  init_args:
+    lr: 1e-4
+    weight_decay: 1e-3
+lr_scheduler:
+  class_path: torch.optim.lr_scheduler.CosineAnnealingLR
+  init_args:
+    T_max: ${eval:'${trainer.max_epochs}*4949'} # len(train_dataloader)=4949
+    eta_min: ${eval:'${optimizer.init_args.lr}//100'}

@@ -167,7 +167,6 @@ wandb
 logs
 notebooks/dev
 notebooks/dev.ipynb
-config.yaml
 *ckpt
 .vscode
 .local
