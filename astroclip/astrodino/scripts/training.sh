@@ -17,7 +17,8 @@ source /mnt/home/lparker/python_envs/dino/bin/activate
 # --- SPECIFY THE FOLLOWING ---
 
 run_name="custom_cp"
-config="astrodino/configs/ssl_default_config.yaml"
+config="astrodino/configs/train/ssl_default_config.yaml"
+output_dir="/mnt/home/lparker/ceph/astrodino/$run_name"
 
 # -----------------------------
 
@@ -26,5 +27,5 @@ export PYTHONPATH=/mnt/home/flanusse/.local/lib/python3.10/site-packages:/mnt/ho
 
 srun python -m astrodino.train.train \
     --config-file=$config \
-    --output-dir=/mnt/home/lparker/ceph/astrodino/$run_name \
+    --output-dir=$output_dir \
     --run-name=$run_name \
