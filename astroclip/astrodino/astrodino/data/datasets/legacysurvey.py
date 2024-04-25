@@ -3,11 +3,14 @@ import logging
 import os
 from enum import Enum
 from typing import Any, Callable, Optional, Tuple, Union
+from jaxtyping import Float, Str, Array, List
 
 import h5py
 import numpy as np
 from PIL import Image as im
 from torchvision.datasets import VisionDataset
+import numpy as np
+from numpy import ndarray
 
 """
 Transformation from raw image data (nanomaggies) to the rgb values displayed
@@ -17,10 +20,8 @@ Code copied from
 https://github.com/legacysurvey/imagine/blob/master/map/views.py
 """
 
-
-def sdss_rgb(imgs, bands, scales=None, m=0.02):
-    import numpy as np
-
+def sdss_rgb(imgs: Float[Array, "b h w c"], bands: List[Str], scales=None, m=0.02):
+    """Convert images to RGB using SDSS imaging color scheme."""
     rgbscales = {
         "u": (2, 1.5),  # 1.0,
         "g": (2, 2.5),
@@ -38,11 +39,6 @@ def sdss_rgb(imgs, bands, scales=None, m=0.02):
         I = I + img
     I /= len(bands)
 
-    # b,g,r = [rimg * rgbscales[b] for rimg,b in zip(imgs, bands)]
-    # r = np.maximum(0, r + m)
-    # g = np.maximum(0, g + m)
-    # b = np.maximum(0, b + m)
-    # I = (r+g+b)/3.
     Q = 20
     fI = np.arcsinh(Q * I) / np.sqrt(Q)
     I += (I == 0.0) * 1e-6
@@ -52,20 +48,12 @@ def sdss_rgb(imgs, bands, scales=None, m=0.02):
         plane, scale = rgbscales[band]
         rgb[:, :, plane] = (img * scale + m) * fI / I
 
-    # R = fI * r / I
-    # G = fI * g / I
-    # B = fI * b / I
-    # # maxrgb = reduce(np.maximum, [R,G,B])
-    # # J = (maxrgb > 1.)
-    # # R[J] = R[J]/maxrgb[J]
-    # # G[J] = G[J]/maxrgb[J]
-    # # B[J] = B[J]/maxrgb[J]
-    # rgb = np.dstack((R,G,B))
     rgb = np.clip(rgb, 0, 1)
     return rgb
 
 
-def dr2_rgb(rimgs, bands, **ignored):
+def dr2_rgb(rimgs: Float[Array, "b h w c"], bands: List[Str], **ignored):
+    """Convert images to RGB using DECaLS imaging color scheme."""
     return sdss_rgb(
         rimgs, bands, scales=dict(g=(2, 6.0), r=(1, 3.4), z=(0, 2.2)), m=0.03
     )
@@ -82,9 +70,10 @@ class _Split(Enum):
 
     @property
     def length(self) -> int:
+        # Using the North Galactic Cap dataset
         split_lengths = {
-            _Split.TRAIN: 9_500_000,
-            _Split.VAL: 100_000,
+            _Split.TRAIN: 9_500_000, 
+            _Split.VAL: 100_000,       
             _Split.TEST: 400_000,
         }
         return split_lengths[self]
@@ -104,6 +93,13 @@ class LegacySurvey(VisionDataset):
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
     ) -> None:
+        """
+        Dataset for the DECaLS Legacy Survey data from Stein, et al. (2020).
+
+        Args:
+            split: The split of the dataset to use.
+            root: The root directory where the dataset is stored.
+        """
         super().__init__(root, transforms, transform, target_transform)
         self._extra_root = extra
         self._split = split
@@ -138,11 +134,13 @@ class LegacySurvey(VisionDataset):
             true_index % int(1e6)
         ].astype("float32")
         target = None
+
         # For testing, let's convert image to PIL images
         image = im.fromarray(
             (dr2_rgb(image, bands=["g", "r", "z"]) * 255).astype("uint8")
         )
 
+        # Apply transformations
         if self.transforms is not None:
             image, target = self.transforms(image, target)
 

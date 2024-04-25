@@ -1,5 +1,6 @@
 # AstroCLIP
 
+![image](assets/im_embedding.png)
 
 ## Install
 Note that an up-to-date eventlet is required for wandb (again old version on rusty)
@@ -16,4 +17,13 @@ pip install -e .
 Run with
 ```
 spectrum_trainer -c astroclip/specformer/config.yaml
+
+## Training Single-Modal SSL Models
+
+### AstroDINO
+The AstroDINO model is based on the DINO_v2 model and can be run from the astrodino subdirectory. 
+
+Once in the subdirectory, run with
+```
+srun python -m astrodino.train.train --config-file={CONFIG} --output-dir={OUTPUT DIR} --run-name={RUN NAME}
 ```
