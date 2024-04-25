@@ -1,5 +1,6 @@
 # AstroCLIP
 
+![image](assets/im_embedding.png)
 
 ## Install
 Note that an up-to-date eventlet is required for wandb (again old version on rusty)
