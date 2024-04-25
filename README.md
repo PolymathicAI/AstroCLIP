@@ -10,3 +10,13 @@ pip install --upgrade pip
 pip install --upgrade eventlet torch lightning[extra]
 pip install -e .
 ```
+
+## Training Single-Modal SSL Models
+
+### AstroDINO
+The AstroDINO model is based on the DINO_v2 model and can be run from the astrodino subdirectory. 
+
+Once in the subdirectory, run with
+```
+srun python -m astrodino.train.train --config-file={CONFIG} --output-dir={OUTPUT DIR} --run-name={RUN NAME} \ 
+```
