@@ -1,1 +1,1 @@
-from .legacysurvey import LegacySurvey
+from .legacysurvey import LegacySurvey, LegacySurveyNorth

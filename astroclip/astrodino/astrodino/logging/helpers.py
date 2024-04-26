@@ -3,19 +3,19 @@
 # This source code is licensed under the Apache License, Version 2.0
 # found in the LICENSE file in the root directory of this source tree.
 
+from collections import defaultdict, deque
 import datetime
 import json
 import logging
-import os
 import time
-from collections import defaultdict, deque
-
-import dinov2.distributed as distributed
-import torch
+import os
 import wandb
 
-logger = logging.getLogger("dinov2")
+import torch
 
+import dinov2.distributed as distributed
+
+logger = logging.getLogger("dinov2")
 
 class MetricLogger(object):
     def __init__(self, delimiter="\t", wandb=None, output_file=None):
@@ -36,9 +36,7 @@ class MetricLogger(object):
             return self.meters[attr]
         if attr in self.__dict__:
             return self.__dict__[attr]
-        raise AttributeError(
-            "'{}' object has no attribute '{}'".format(type(self).__name__, attr)
-        )
+        raise AttributeError("'{}' object has no attribute '{}'".format(type(self).__name__, attr))
 
     def __str__(self):
         loss_str = []
@@ -61,20 +59,18 @@ class MetricLogger(object):
             iter_time=iter_time,
             data_time=data_time,
         )
-
+        
         metrics = {k: v.median for k, v in self.meters.items()}
         global_rank = int(os.environ.get("RANK", 0))
         if self.wandb is not None and global_rank == 0:
-            self.wandb.log(metrics, step=iteration)
-
+            self.wandb.log(metrics, step = iteration)
+        
         dict_to_dump.update(metrics)
         with open(self.output_file, "a") as f:
             f.write(json.dumps(dict_to_dump) + "\n")
         pass
 
-    def log_every(
-        self, iterable, print_freq, header=None, n_iterations=None, start_iteration=0
-    ):
+    def log_every(self, iterable, print_freq, header=None, n_iterations=None, start_iteration=0):
         i = start_iteration
         if not header:
             header = ""
@@ -106,9 +102,7 @@ class MetricLogger(object):
             yield obj
             iter_time.update(time.time() - end)
             if i % print_freq == 0 or i == n_iterations - 1:
-                self.dump_in_output_file(
-                    iteration=i, iter_time=iter_time.avg, data_time=data_time.avg
-                )
+                self.dump_in_output_file(iteration=i, iter_time=iter_time.avg, data_time=data_time.avg)
                 eta_seconds = iter_time.global_avg * (n_iterations - i)
                 eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
                 if torch.cuda.is_available():
@@ -140,11 +134,7 @@ class MetricLogger(object):
                 break
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-        logger.info(
-            "{} Total time: {} ({:.6f} s / it)".format(
-                header, total_time_str, total_time / n_iterations
-            )
-        )
+        logger.info("{} Total time: {} ({:.6f} s / it)".format(header, total_time_str, total_time / n_iterations))
 
 
 class SmoothedValue:
