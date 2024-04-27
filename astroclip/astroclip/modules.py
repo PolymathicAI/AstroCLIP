@@ -1,13 +1,10 @@
 import torch
 import torch.nn as nn
 
-from astroclip.astroclip.utils import (
-    fnc,
-    forward_image_backbone,
-    forward_spectrum_backbone,
-    load_spectrum_model_from_ckpt,
-)
+from astroclip.astroclip.utils import forward_image_backbone
 from astroclip.astrodino.dinov2.dinov2.eval.setup import setup_and_build_model
+
+from ..specformer.model import SpecFormer
 
 
 class ImageModule(nn.Module):
@@ -87,12 +84,11 @@ class SpectrumModule(nn.Module):
         super().__init__()
 
         # Load the model from the checkpoint
-        out = self._load_model_from_ckpt(save_path)
-        self.config = out["config"]
-        self.backbone = out["model"]
-
-        # Replace forward pass to give all tokens
-        self.backbone.forward = forward_spectrum_backbone.__get__(self.backbone)
+        # TODO: merge from refactor/spectrum
+        checkpoint = torch.load(save_path)
+        self.config = checkpoint["config"]
+        self.backbone = SpecFormer(**self.config)
+        self.backbone.load_from_checkpoint(checkpoint["state_dict"])
 
         # Freeze backbone if necessary
         self.freeze_backbone = freeze_backbone
@@ -118,6 +114,7 @@ class SpectrumModule(nn.Module):
         self, x: torch.tensor, y: torch.tensor = None, return_weights: bool = False
     ):
         # Slice the spectrum
+        # TODO: use spectrum collate function
         x = fnc(x.unsqueeze(-1))
 
         # Embed the spectrum using the pretrained model
