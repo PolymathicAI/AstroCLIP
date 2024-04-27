@@ -29,7 +29,6 @@ model:
     num_heads: 6
     max_len: 800
     dropout: 0.
-    norm_first: False
 data:
   class_path: AstroClipDataset
   init_args:

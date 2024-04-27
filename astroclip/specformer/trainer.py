@@ -63,9 +63,10 @@ class PlotsCallback(Callback):
         ]
 
         fig = plt.figure()
-        plt.plot(in_rec, label="dropped")
         plt.plot(sp_rec, label="original")
+        plt.plot(in_rec, label="dropped")
         plt.plot(out_rec, label="reconstructed")
+        plt.legend()
         return fig
 
     def on_validation_batch_start(
@@ -85,7 +86,7 @@ class PlotsCallback(Callback):
                     type(logger.experiment), wandb.sdk.lib.disabled.RunDisabled
                 ):
                     logger: WandbLogger = logger
-                    logger.experiment.log({f"plot/{pl_module.current_epoch}": fig})
+                    logger.experiment.log({f"plot/{pl_module.current_epoch:03d}": fig})
 
 
 def main_cli(args: ArgsType = None, run: bool = True):

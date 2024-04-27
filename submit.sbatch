@@ -3,7 +3,7 @@
 #SBATCH -p gpu
 ##SBATCH -C "h100|a100"
 #SBATCH -J "astroclip-spectrum"
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=2
 #SBATCH --gpus-per-node=2
 #SBATCH --cpus-per-gpu=8

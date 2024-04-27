@@ -170,3 +170,4 @@ notebooks/dev.ipynb
 *ckpt
 .vscode
 .local
+ceph_data

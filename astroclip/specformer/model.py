@@ -96,7 +96,7 @@ class SpecFormer(L.LightningModule):
         output = self(input)
 
         # find the mask locations
-        locs = (input == target).type_as(output)
+        locs = (input != target).type_as(output)
         loss = F.mse_loss(output * locs, target * locs, reduction="mean") / locs.mean()
         self.log("val_training_loss", loss, prog_bar=True)
         return loss
