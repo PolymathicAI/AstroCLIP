@@ -1,23 +1,25 @@
 import numpy as np
 import torch
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import default_collate
 
 
 class SpectrumCollator:
-    def __init__(self, num_chunks, chunk_width):
+    def __init__(self, num_chunks: int = 6, chunk_width: int = 50):
         self.num_chunks = num_chunks
         self.chunk_width = chunk_width
 
     def __call__(self, samples, mlm=None):
         preprocessed_samples = [
-            self.preprocess(el["spectrum"])
+            preprocess(el["spectrum"])
             for el in samples
             if np.array(el["spectrum"]).std() > 0
         ]
         out = {
             "input": pad_sequence(
-                [self.mask_seq(torch.tensor(el)) for el in preprocessed_samples],
+                [
+                    mask_seq(torch.tensor(el), self.num_chunks, self.chunk_width)
+                    for el in preprocessed_samples
+                ],
                 batch_first=True,
                 padding_value=0,
             ),
@@ -71,7 +73,7 @@ def mask_seq(seq, num_chunks, chunk_width):
     return masked_seq
 
 
-def slice(x, section_length=10, overlap=5):
+def slice(x, section_length: int = 10, overlap: int = 5):
     start_indices = np.arange(0, len(x) - overlap, section_length - overlap)
     sections = [x[start : start + section_length] for start in start_indices]
 

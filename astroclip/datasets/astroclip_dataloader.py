@@ -1,18 +1,19 @@
 from typing import Callable, Dict, List
 
-import datasets
 import lightning as L
 import torch
 from torch import Tensor
+
+import datasets
 
 
 class AstroClipDataset(L.LightningDataModule):
     def __init__(
         self,
         path: str,
-        columns: List[str],
-        batch_size: int,
-        num_workers: int,
+        columns: List[str] = ["image", "spectrum"],
+        batch_size: int = 512,
+        num_workers: int = 10,
         collate_fn: Callable[[Dict[str, Tensor]], Dict[str, Tensor]] = None,
     ) -> None:
         super().__init__()
