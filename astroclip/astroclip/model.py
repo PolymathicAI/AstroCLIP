@@ -24,6 +24,21 @@ class AstroCLIP(L.LightningModule):
         logit_scale: float = 15.5,
         learnable_logit_scale: bool = False,
     ):
+        """
+        The AstroCLIP model that takes an image and a spectrum and embeds them into a common space using CLIP loss.
+        Note that you must provide the image and spectrum encoders to be used for the embedding.
+
+        Args:
+            image_encoder (nn.Module): The image encoder to be used for embedding.
+            spectrum_encoder (nn.Module): The spectrum encoder to be used for embedding.
+            temperature (float): The temperature parameter for the CLIP loss.
+            lr (float): The learning rate for the optimizer.
+            weight_decay (float): The weight decay for the optimizer.
+            epochs (int): The number of epochs for training.
+            eta_min (float): The minimum learning rate for the scheduler.
+            logit_scale (float): The logit scale for the CLIP loss.
+            learnable_logit_scale (bool): Whether the logit scale should be learnable.
+        """
         super().__init__()
         self.save_hyperparameters()
 

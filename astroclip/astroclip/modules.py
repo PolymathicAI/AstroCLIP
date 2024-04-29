@@ -18,6 +18,20 @@ class ImageModule(nn.Module):
         dropout: float = 0.1,
         freeze_backbone: bool = True,
     ):
+        """
+        Cross-attention image module that takes token outputs from the AstroDINO model and passes them through a
+        cross-attention mechanism and MLP to get the final embedding.
+
+        Args:
+            save_directory (str): Path to the directory containing the AstroDINO model.
+            config (str): Path to the configuration file of the AstroDINO model.
+            model_weights (str): Path to the weights of the AstroDINO model.
+            embed_dim (int): Dimension of the AstroCLIP embedding.
+            n_head (int): Number of heads in the multihead attention.
+            model_embed_dim (int): Dimension of the AstroDINO embedding.
+            dropout (float): Dropout rate for MLP layers.
+            freeze_backbone (bool): Whether to freeze the backbone of the AstroDINO model.
+        """
         super().__init__()
 
         class config:
@@ -80,8 +94,19 @@ class SpectrumModule(nn.Module):
         dropout: float = 0.1,
         freeze_backbone: bool = True,
     ):
-        super().__init__()
+        """
+        Cross-attention spectrum module that takes a spectrum and passes it through a pretrained SpecFormer model and
+        then through a cross-attention mechanism and MLP to get the final embedding.
 
+        Args:
+            save_path (str): Path to the checkpoint of the SpecFormer model.
+            embed_dim (int): Dimension of the AstroCLIP embedding.
+            n_head (int): Number of heads in the multihead attention.
+            model_embed_dim (int): Dimension of the SpecFormer embedding.
+            dropout (float): Dropout rate for MLP layers.
+            freeze_backbone (bool): Whether to freeze the backbone of the SpecFormer model.
+        """
+        super().__init__()
         # Load the model from the checkpoint
         # TODO: merge from refactor/spectrum
         checkpoint = torch.load(save_path)
@@ -140,6 +165,7 @@ class CrossAttentionHead(nn.Module):
         self,
         **kwargs,
     ):
+        """Multihead cross-attention layer with dropout."""
         super().__init__()
         self.query = nn.Parameter(torch.randn(1, 1, kwargs["embed_dim"]))
         self.multihead_attn = nn.MultiheadAttention(
@@ -170,6 +196,7 @@ class MLP(nn.Module):
         self,
         **kwargs,
     ):
+        """MLP with GELU activation and dropout."""
         super().__init__()
         self.d_model = kwargs["embed_dim"]
         self.dim_feedforward = self.d_model * 4
