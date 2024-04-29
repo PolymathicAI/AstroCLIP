@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-from astroclip.astroclip.utils import forward_image_backbone
 from astroclip.astrodino.dinov2.dinov2.eval.setup import setup_and_build_model
 
 from ..specformer.model import SpecFormer
@@ -28,7 +27,7 @@ class ImageModule(nn.Module):
             opts = []
 
         # Define DINO model
-        self.backbone, dtype = setup_and_build_model(config())
+        self.backbone, _ = setup_and_build_model(config())
         self.backbone.forward = forward_image_backbone.__get__(self.backbone)
 
         # Freeze backbone if necessary
@@ -183,3 +182,12 @@ class MLP(nn.Module):
 
     def forward(self, x: torch.tensor):
         return self.mlp(x)
+
+
+def forward_image_backbone(self, x: torch.Tensor) -> torch.Tensor:
+    """Forward pass of the image transformer model to get all tokens."""
+    x = self.patch_embed(x)
+    for blk in self.blocks:
+        x = blk(x)
+    x = self.norm(x)
+    return x
