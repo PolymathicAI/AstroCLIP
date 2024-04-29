@@ -38,7 +38,7 @@ data:
     batch_size: 64
     num_workers: 0
     collate_fn:
-      class_path: astroclip.specformer.preprocessing.SpectrumCollator
+      class_path: astroclip.datasets.preprocessing.spectrum.SpectrumCollator
       init_args:
         num_chunks: 6
         chunk_width: 50
