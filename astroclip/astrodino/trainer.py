@@ -340,8 +340,8 @@ def do_train(cfg, model, resume=False):
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
-def main_cli():
-    args = get_args_parser(add_help=True).parse_args()
+def main_cli(cli_args=None):
+    args = get_args_parser(add_help=True).parse_args(cli_args)
 
     # set up wandb
     global_rank = int(os.environ.get("RANK", 0))

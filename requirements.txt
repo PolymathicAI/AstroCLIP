@@ -3,4 +3,7 @@ jaxtyping
 plotly
 python-dotenv
 wandb
+torchvision==0.15.0
+lightning[extra]
+pycairo
 dinov2 @ git+https://github.com/facebookresearch/dinov2.git@2302b6bf46953431b969155307b9bed152754069
