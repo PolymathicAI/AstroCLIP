@@ -171,3 +171,4 @@ notebooks/dev.ipynb
 .vscode
 .local
 ceph_data
+astroclip/_version.py
