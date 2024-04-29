@@ -1,15 +1,14 @@
 # Dataset file for DESI Legacy Survey data
-from torchvision.datasets import VisionDataset
-import os
-from typing import Callable, List, Optional, Tuple, Union, Any
-from enum import Enum
 import logging
+import os
+from enum import Enum
+from typing import Any, Callable, Optional, Tuple, Union
+
+import h5py
 import numpy as np
 import torch
-import h5py
 from PIL import Image as im
-
-import numpy as np
+from torchvision.datasets import VisionDataset
 
 """
 Transformation from raw image data (nanomaggies) to the rgb values displayed
@@ -19,40 +18,46 @@ Code copied from
 https://github.com/legacysurvey/imagine/blob/master/map/views.py
 """
 
-def sdss_rgb(imgs, bands, scales=None,
-             m = 0.02):
-    rgbscales = {'u': (2,1.5), #1.0,
-                 'g': (2,2.5),
-                 'r': (1,1.5),
-                 'i': (0,1.0),
-                 'z': (0,0.4), #0.3
-                 }
+
+def sdss_rgb(imgs, bands, scales=None, m=0.02):
+    rgbscales = {
+        "u": (2, 1.5),  # 1.0,
+        "g": (2, 2.5),
+        "r": (1, 1.5),
+        "i": (0, 1.0),
+        "z": (0, 0.4),  # 0.3
+    }
     if scales is not None:
         rgbscales.update(scales)
 
     I = 0
-    for img,band in zip(imgs, bands):
-        plane,scale = rgbscales[band]
+    for img, band in zip(imgs, bands):
+        plane, scale = rgbscales[band]
         img = np.maximum(0, img * scale + m)
         I = I + img
     I /= len(bands)
-        
+
     Q = 20
     fI = np.arcsinh(Q * I) / np.sqrt(Q)
-    I += (I == 0.) * 1e-6
-    H,W = I.shape
-    rgb = np.zeros((H,W,3), np.float32)
-    for img,band in zip(imgs, bands):
-        plane,scale = rgbscales[band]
-        rgb[:,:,plane] = (img * scale + m) * fI / I
+    I += (I == 0.0) * 1e-6
+    H, W = I.shape
+    rgb = np.zeros((H, W, 3), np.float32)
+    for img, band in zip(imgs, bands):
+        plane, scale = rgbscales[band]
+        rgb[:, :, plane] = (img * scale + m) * fI / I
     rgb = np.clip(rgb, 0, 1)
     return rgb
 
+
 def dr2_rgb(rimgs, bands, **ignored):
-    return sdss_rgb(rimgs, bands, scales=dict(g=(2,6.0), r=(1,3.4), z=(0,2.2)), m=0.03)
+    return sdss_rgb(
+        rimgs, bands, scales=dict(g=(2, 6.0), r=(1, 3.4), z=(0, 2.2)), m=0.03
+    )
+
 
 logger = logging.getLogger("astrodino")
 _Target = float
+
 
 class _SplitFull(Enum):
     TRAIN = "train"
@@ -88,8 +93,22 @@ class LegacySurvey(VisionDataset):
         self._split = split
 
         # We start by opening the hdf5 files located at the root directory
-        self._files = [h5py.File(os.path.join(root, 'north/images_npix152_0%02d000000_0%02d000000.h5'%(i,i+1))) for i in range(14)]
-        self._files += [h5py.File(os.path.join(root, 'south/images_npix152_0%02d000000_0%02d000000.h5'%(i,i+1))) for i in range(61)]
+        self._files = [
+            h5py.File(
+                os.path.join(
+                    root, "north/images_npix152_0%02d000000_0%02d000000.h5" % (i, i + 1)
+                )
+            )
+            for i in range(14)
+        ]
+        self._files += [
+            h5py.File(
+                os.path.join(
+                    root, "south/images_npix152_0%02d000000_0%02d000000.h5" % (i, i + 1)
+                )
+            )
+            for i in range(61)
+        ]
 
         # Create randomized array of indices
         rng = np.random.default_rng(seed=42)
@@ -106,16 +125,16 @@ class LegacySurvey(VisionDataset):
         return self._split
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
-
         true_index = self._indices[index]
-        image = self._files[true_index // int(1e6)]['images'][true_index % 
-                                                              int(1e6)].astype('float32')
+        image = self._files[true_index // int(1e6)]["images"][
+            true_index % int(1e6)
+        ].astype("float32")
         target = None
-        image = torch.tensor(dr2_rgb(image, bands=['g','r','z'])).permute(2,0,1) 
+        image = torch.tensor(dr2_rgb(image, bands=["g", "r", "z"])).permute(2, 0, 1)
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
-            
+
         return image, target
 
     def __len__(self) -> int:
@@ -156,7 +175,14 @@ class LegacySurveyNorth(VisionDataset):
         self._split = split
 
         # We start by opening the hdf5 files located at the root directory
-        self._files = [h5py.File(os.path.join(root, 'north/images_npix152_0%02d000000_0%02d000000.h5'%(i,i+1))) for i in range(14)]
+        self._files = [
+            h5py.File(
+                os.path.join(
+                    root, "north/images_npix152_0%02d000000_0%02d000000.h5" % (i, i + 1)
+                )
+            )
+            for i in range(14)
+        ]
 
         # Create randomized array of indices
         rng = np.random.default_rng(seed=42)
@@ -173,18 +199,17 @@ class LegacySurveyNorth(VisionDataset):
         return self._split
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
-
         true_index = self._indices[index]
-        image = self._files[true_index // int(1e6)]['images'][true_index % 
-                                                              int(1e6)].astype('float32')
+        image = self._files[true_index // int(1e6)]["images"][
+            true_index % int(1e6)
+        ].astype("float32")
         target = None
-        image = torch.tensor(dr2_rgb(image, bands=['g','r','z'])).permute(2,0,1) 
+        image = torch.tensor(dr2_rgb(image, bands=["g", "r", "z"])).permute(2, 0, 1)
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
-            
+
         return image, target
 
     def __len__(self) -> int:
         return len(self._indices)
-

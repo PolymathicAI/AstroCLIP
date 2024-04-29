@@ -4,16 +4,10 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import logging
-
-from torchvision import transforms
-
-from dinov2.data.transforms import (
-    GaussianBlur,
-    make_normalize_transform,
-)
-
-from torchvision import transforms
 from typing import Sequence
+
+from dinov2.data.transforms import GaussianBlur, make_normalize_transform
+from torchvision import transforms
 
 logger = logging.getLogger("dinov2")
 
@@ -21,11 +15,13 @@ logger = logging.getLogger("dinov2")
 DESI_DEFAULT_MEAN = (0.0, 0.0, 0.0)
 DESI_DEFAULT_STD = (1.0, 1.0, 1.0)
 
+
 def make_normalize_transform(
     mean: Sequence[float] = DESI_DEFAULT_MEAN,
     std: Sequence[float] = DESI_DEFAULT_STD,
 ) -> transforms.Normalize:
     return transforms.Normalize(mean=mean, std=std)
+
 
 class DataAugmentationAstroDINO(object):
     def __init__(
@@ -54,9 +50,7 @@ class DataAugmentationAstroDINO(object):
         # random resized crop and flip
         self.geometric_augmentation_global = transforms.Compose(
             [
-                transforms.RandomCrop(
-                    global_crops_size
-                ),
+                transforms.RandomCrop(global_crops_size),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomVerticalFlip(p=0.5),
                 transforms.RandomRotation(degrees=180),
@@ -65,9 +59,7 @@ class DataAugmentationAstroDINO(object):
 
         self.geometric_augmentation_local = transforms.Compose(
             [
-                transforms.RandomCrop(
-                    local_crops_size
-                ),
+                transforms.RandomCrop(local_crops_size),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomVerticalFlip(p=0.5),
                 transforms.RandomRotation(degrees=180),
@@ -91,9 +83,13 @@ class DataAugmentationAstroDINO(object):
             ]
         )
 
-        self.global_transfo1 = transforms.Compose([ global_transfo1_extra, self.normalize])
-        self.global_transfo2 = transforms.Compose([ global_transfo2_extra, self.normalize])
-        self.local_transfo = transforms.Compose([ local_transfo_extra, self.normalize])
+        self.global_transfo1 = transforms.Compose(
+            [global_transfo1_extra, self.normalize]
+        )
+        self.global_transfo2 = transforms.Compose(
+            [global_transfo2_extra, self.normalize]
+        )
+        self.local_transfo = transforms.Compose([local_transfo_extra, self.normalize])
 
     def __call__(self, image):
         output = {}
@@ -112,7 +108,8 @@ class DataAugmentationAstroDINO(object):
 
         # local crops:
         local_crops = [
-            self.local_transfo(self.geometric_augmentation_local(image)) for _ in range(self.local_crops_number)
+            self.local_transfo(self.geometric_augmentation_local(image))
+            for _ in range(self.local_crops_number)
         ]
         output["local_crops"] = local_crops
         output["offsets"] = ()

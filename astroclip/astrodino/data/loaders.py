@@ -8,11 +8,10 @@ from enum import Enum
 from typing import Any, Callable, List, Optional, TypeVar
 
 import torch
+from dinov2.data.samplers import EpochSampler, InfiniteSampler, ShardedInfiniteSampler
 from torch.utils.data import Sampler
 
 from .datasets import LegacySurvey, LegacySurveyNorth
-from dinov2.data.samplers import EpochSampler, InfiniteSampler, ShardedInfiniteSampler
-
 
 logger = logging.getLogger("dinov2")
 
@@ -29,7 +28,10 @@ def _make_bool_str(b: bool) -> str:
     return "yes" if b else "no"
 
 
-def _make_sample_transform(image_transform: Optional[Callable] = None, target_transform: Optional[Callable] = None):
+def _make_sample_transform(
+    image_transform: Optional[Callable] = None,
+    target_transform: Optional[Callable] = None,
+):
     def transform(sample):
         image, target = sample
         if image_transform is not None:

@@ -7,6 +7,7 @@ import torch.optim as optim
 import tqdm
 import wandb
 from astropy.table import Table, join
+from datasets import load_dataset
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset, random_split
@@ -20,8 +21,6 @@ from torchvision.transforms import (
     ToTensor,
 )
 from utils.models import SpectrumEncoder
-
-from datasets import load_dataset
 
 # Constants
 DEFAULT_CACHE_DIR = "/mnt/ceph/users/lparker/datasets_astroclip"

@@ -1,3 +1,0 @@
-[submodule "astroclip/astrodino/dinov2"]
-	path = astroclip/astrodino/dinov2
-	url = https://github.com/facebookresearch/dinov2.git

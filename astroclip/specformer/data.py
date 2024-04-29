@@ -1,10 +1,9 @@
 from typing import Callable, Dict, List
 
+import datasets
 import lightning as L
 import torch
 from torch import Tensor
-
-import datasets
 
 
 class AstroClipDataset(L.LightningDataModule):

@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim.lr_scheduler as lr_scheduler
 import torchvision.models as models
+from datasets import load_dataset, load_from_disk
 from fillm.run.model import *
 from scipy.ndimage import gaussian_filter1d
 from sklearn.decomposition import PCA
@@ -33,8 +34,6 @@ from tutorial_helpers import (
     scatter_plot_as_images,
     slice,
 )
-
-from datasets import load_dataset, load_from_disk
 
 sys.path.insert(
     0,

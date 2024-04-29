@@ -4,44 +4,57 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import argparse
+import logging
 import math
 import os
 from functools import partial
 
-import logging
-import wandb
-
-from omegaconf import OmegaConf
-
-from fvcore.common.checkpoint import PeriodicCheckpointer
 import torch
-
-from astrodino.data.loaders import make_data_loader, make_dataset
-from astrodino.data.augmentations import DataAugmentationAstroDINO
-import astrodino.distributed as distributed
-from astrodino.logging.helpers import MetricLogger
-
-from dinov2.data import SamplerType
-from dinov2.data import collate_data_and_cast, DataAugmentationDINO, MaskingGenerator
-
+import wandb
+from dinov2.data import (
+    DataAugmentationDINO,
+    MaskingGenerator,
+    SamplerType,
+    collate_data_and_cast,
+)
 from dinov2.fsdp import FSDPCheckpointer
+from dinov2.train.ssl_meta_arch import SSLMetaArch
 from dinov2.utils.config import setup
 from dinov2.utils.utils import CosineScheduler
+from fvcore.common.checkpoint import PeriodicCheckpointer
+from omegaconf import OmegaConf
 
-from dinov2.train.ssl_meta_arch import SSLMetaArch
+from astroclip.astrodino import distributed as distributed
+from astroclip.astrodino.data.augmentations import DataAugmentationAstroDINO
+from astroclip.astrodino.data.loaders import make_data_loader, make_dataset
+from astroclip.astrodino.utils import MetricLogger
+from astroclip.env import format_with_env
 
-torch.backends.cuda.matmul.allow_tf32 = True  # PyTorch 1.12 sets this to False by default
+torch.backends.cuda.matmul.allow_tf32 = (
+    True  # PyTorch 1.12 sets this to False by default
+)
 logger = logging.getLogger("dinov2")
+ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
+
 
 def get_args_parser(add_help: bool = True):
     parser = argparse.ArgumentParser("DINOv2 training", add_help=add_help)
-    parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")
+    parser.add_argument(
+        "--config-file",
+        "-c",
+        "--config",
+        default="",
+        metavar="FILE",
+        help="path to config file",
+    )
     parser.add_argument(
         "--no-resume",
         action="store_true",
         help="Whether to not attempt to resume from the checkpoint directory. ",
     )
-    parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
+    parser.add_argument(
+        "--eval-only", action="store_true", help="perform evaluation only"
+    )
     parser.add_argument("--eval", type=str, default="", help="Eval type to perform")
     parser.add_argument(
         "opts",
@@ -53,13 +66,7 @@ For python-based LazyConfig, use "path.key=value".
         default=None,
         nargs=argparse.REMAINDER,
     )
-    parser.add_argument(
-        "--output-dir",
-        "--output_dir",
-        default="",
-        type=str,
-        help="Output directory to save logs and checkpoints",
-    )
+
     parser.add_argument("--run-name", default="00", help="run name for wandb")
     parser.add_argument("--group-name", default="test", help="group name for wandb")
 
@@ -67,7 +74,9 @@ For python-based LazyConfig, use "path.key=value".
 
 
 def build_optimizer(cfg, params_groups):
-    return torch.optim.AdamW(params_groups, betas=(cfg.optim.adamw_beta1, cfg.optim.adamw_beta2))
+    return torch.optim.AdamW(
+        params_groups, betas=(cfg.optim.adamw_beta1, cfg.optim.adamw_beta2)
+    )
 
 
 def build_schedulers(cfg):
@@ -129,17 +138,23 @@ def apply_optim_scheduler(optimizer, lr, wd, last_layer_lr):
 
 def do_test(cfg, model, iteration):
     new_state_dict = model.teacher.state_dict()
-
     if distributed.is_main_process():
         iterstring = str(iteration)
-        eval_dir = os.path.join(cfg.train.output_dir, "eval", iterstring)
+        eval_dir = os.path.join(
+            ASTROCLIP_ROOT,
+            "outputs",
+            "astroclip_image",
+            wandb.run.id,
+            "eval",
+            iterstring,
+        )
         os.makedirs(eval_dir, exist_ok=True)
         # save teacher checkpoint
         teacher_ckp_path = os.path.join(eval_dir, "teacher_checkpoint.pth")
         torch.save({"teacher": new_state_dict}, teacher_ckp_path)
 
 
-def do_train(cfg, model, run_name, group_name="test", resume=False):
+def do_train(cfg, model, resume=False):
     model.train()
     inputs_dtype = torch.half
     fp16_scaler = model.fp16_scaler  # for mixed precision training
@@ -156,10 +171,20 @@ def do_train(cfg, model, run_name, group_name="test", resume=False):
     ) = build_schedulers(cfg)
 
     # checkpointer
-    
-    checkpointer = FSDPCheckpointer(model, cfg.train.output_dir, optimizer=optimizer, save_to_disk=True)
 
-    start_iter = checkpointer.resume_or_load(cfg.MODEL.WEIGHTS, resume=resume).get("iteration", -1) + 1
+    checkpointer = FSDPCheckpointer(
+        model,
+        f"{ASTROCLIP_ROOT}/outputs/astroclip_image/{wandb.run.id}",
+        optimizer=optimizer,
+        save_to_disk=True,
+    )
+
+    start_iter = (
+        checkpointer.resume_or_load(cfg.MODEL.WEIGHTS, resume=resume).get(
+            "iteration", -1
+        )
+        + 1
+    )
 
     OFFICIAL_EPOCH_LENGTH = cfg.train.OFFICIAL_EPOCH_LENGTH
     max_iter = cfg.optim.epochs * OFFICIAL_EPOCH_LENGTH
@@ -181,14 +206,14 @@ def do_train(cfg, model, run_name, group_name="test", resume=False):
         max_num_patches=0.5 * img_size // patch_size * img_size // patch_size,
     )
 
-    #data_transform = DataAugmentationDINO(
+    # data_transform = DataAugmentationDINO(
     #    cfg.crops.global_crops_scale,
     #    cfg.crops.local_crops_scale,
     #    cfg.crops.local_crops_number,
     #    global_crops_size=cfg.crops.global_crops_size,
     #    local_crops_size=cfg.crops.local_crops_size,
-    #)
-    
+    # )
+
     # Apply custom data augmentations for astro
     data_transform = DataAugmentationAstroDINO(
         cfg.crops.global_crops_scale,
@@ -227,33 +252,23 @@ def do_train(cfg, model, run_name, group_name="test", resume=False):
         drop_last=True,
         collate_fn=collate_fn,
     )
-    
-    # set up wandb
-    global_rank = int(os.environ.get("RANK", 0))
-    if global_rank == 0:
-        wandb.init(project="astrodino", 
-                   entity="flatiron-scipt",
-                   group=group_name,
-                   name=run_name,
-                   config=OmegaConf.to_object(cfg),
-                   resume='allow')
 
     # training loop
 
     iteration = start_iter
 
     logger.info("Starting training from iteration {}".format(start_iter))
-    metrics_file = os.path.join(cfg.train.output_dir, "training_metrics.json")
+    metrics_file = os.path.join(
+        ASTROCLIP_ROOT,
+        "outputs",
+        "astroclip_image",
+        wandb.run.id,
+        "training_metrics.json",
+    )
     metric_logger = MetricLogger(delimiter="  ", wandb=wandb, output_file=metrics_file)
     header = "Training"
 
-    for data in metric_logger.log_every(
-        data_loader,
-        25,
-        header,
-        max_iter,
-        start_iter
-    ):
+    for data in metric_logger.log_every(data_loader, 25, header, max_iter, start_iter):
         current_batch_size = data["collated_global_crops"].shape[0] / 2
         if iteration > max_iter:
             return
@@ -296,7 +311,9 @@ def do_train(cfg, model, run_name, group_name="test", resume=False):
         if distributed.get_global_size() > 1:
             for v in loss_dict.values():
                 torch.distributed.all_reduce(v)
-        loss_dict_reduced = {k: v.item() / distributed.get_global_size() for k, v in loss_dict.items()}
+        loss_dict_reduced = {
+            k: v.item() / distributed.get_global_size() for k, v in loss_dict.items()
+        }
 
         if math.isnan(sum(loss_dict_reduced.values())):
             logger.info("NaN detected")
@@ -311,7 +328,10 @@ def do_train(cfg, model, run_name, group_name="test", resume=False):
         metric_logger.update(total_loss=losses_reduced, **loss_dict_reduced)
         # checkpointing and testing
 
-        if cfg.evaluation.eval_period_iterations > 0 and (iteration + 1) % cfg.evaluation.eval_period_iterations == 0:
+        if (
+            cfg.evaluation.eval_period_iterations > 0
+            and (iteration + 1) % cfg.evaluation.eval_period_iterations == 0
+        ):
             do_test(cfg, model, f"training_{iteration}")
             torch.cuda.synchronize()
         periodic_checkpointer.step(iteration)
@@ -322,11 +342,21 @@ def do_train(cfg, model, run_name, group_name="test", resume=False):
 
 
 def main(args):
-    cfg = setup(args) 
-        
     # set up wandb
-    run_name = args.run_name
-    group_name = args.group_name
+    global_rank = int(os.environ.get("RANK", 0))
+    if global_rank == 0:
+        wandb.init(
+            project="astrodino",
+            entity=format_with_env("{WANDB_ENTITY_NAME}"),
+            group=args.group_name,
+            name=args.run_name,
+            resume="allow",
+            dir=f"{ASTROCLIP_ROOT}/outputs/astroclip_image",
+            allow_val_change=True,
+        )
+    args.output_dir = f"{ASTROCLIP_ROOT}/outputs/astroclip_image/{wandb.run.id}"
+    cfg = setup(args)
+    wandb.run.config.update(OmegaConf.to_object(cfg))
 
     model = SSLMetaArch(cfg).to(torch.device("cuda"))
     model.prepare_for_distributed_training()
@@ -341,7 +371,7 @@ def main(args):
         )
         return do_test(cfg, model, f"manual_{iteration}")
 
-    do_train(cfg, model, run_name, group_name, resume=not args.no_resume)
+    do_train(cfg, model, resume=not args.no_resume)
 
 
 if __name__ == "__main__":

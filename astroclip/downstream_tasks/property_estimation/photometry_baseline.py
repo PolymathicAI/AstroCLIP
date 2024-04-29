@@ -5,13 +5,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from astropy.table import Table, join
+from datasets import load_dataset
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset, random_split
 from utils.helpers import few_shot_train
 from utils.models import SimpleMLP
-
-from datasets import load_dataset
 
 properties = ["Z_HP", "LOG_MSTAR", "Z_MW", "t_ageMW", "SFR"]
 scaler = StandardScaler()
