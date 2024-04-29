@@ -14,7 +14,7 @@ class AstroClipDataset(L.LightningDataModule):
         columns: List[str],
         batch_size: int,
         num_workers: int,
-        collate_fn: Callable[Dict[str, Tensor], Dict[str, Tensor]] = None,
+        collate_fn: Callable[[Dict[str, Tensor]], Dict[str, Tensor]] = None,
     ) -> None:
         super().__init__()
         self.save_hyperparameters()
