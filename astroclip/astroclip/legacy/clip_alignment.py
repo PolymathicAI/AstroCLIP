@@ -26,7 +26,8 @@ from torchvision.transforms import (
     ToPILImage,
     ToTensor,
 )
-from tutorial_helpers import (
+
+from astroclip.astroclip.legacy.tutorial_helpers import (
     dr2_rgb,
     fnc,
     forward,
