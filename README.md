@@ -12,6 +12,12 @@ pip install --upgrade eventlet torch lightning[extra]
 pip install -e .
 ```
 
+### Spectrum encoder:
+
+Run with
+```
+spectrum_trainer -c astroclip/specformer/config.yaml
+
 ## Training Single-Modal SSL Models
 
 ### AstroDINO
