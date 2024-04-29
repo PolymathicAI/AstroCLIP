@@ -4,6 +4,7 @@ import torch.nn as nn
 from astroclip.astrodino.dinov2.dinov2.eval.setup import setup_and_build_model
 
 from ..specformer.model import SpecFormer
+from ..specformer.preprocessing import preprocess
 
 
 class ImageModule(nn.Module):

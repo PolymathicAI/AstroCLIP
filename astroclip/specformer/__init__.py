@@ -1,5 +1,5 @@
-from ..datasets.astroclip_dataloader import AstroClipDataset
-from ..datasets.preprocessing.spectrum import SpectrumCollator
 from . import utils
+from .data import AstroClipDataset
 from .model import SpecFormer
+from .preprocessing import SpectrumCollator
 from .scheduler import CosineAnnealingWithWarmupLR

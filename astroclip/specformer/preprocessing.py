@@ -5,6 +5,13 @@ from torch.nn.utils.rnn import pad_sequence
 
 class SpectrumCollator:
     def __init__(self, num_chunks: int = 6, chunk_width: int = 50):
+        """
+        Collator for masked modelling of spectra. The input is a masked spectrum, and the target is the original spectrum.
+
+        Args:
+            num_chunks (int): Number of chunks to mask
+            chunk_width (int): Width of each chunk
+        """
         self.num_chunks = num_chunks
         self.chunk_width = chunk_width
 
@@ -33,13 +40,14 @@ class SpectrumCollator:
         return out
 
 
-def preprocess(x):
+def preprocess(x, section_length: int = 20, overlap: int = 10):
+    """Preprocesses a spectrum by normalizing it and slicing it into sections."""
     x = np.array(x)
     std, mean = x.std(), x.mean()
     # skipping samples that are all zero
     if std != 0:
         x = (x - mean) / std
-        x = slice(x, 20, 10)
+        x = slice(x, section_length, overlap)
         x = np.pad(x, pad_width=((1, 0), (2, 0)), mode="constant", constant_values=0)
 
         x[0, 0] = (mean - 2) / 2
@@ -50,10 +58,8 @@ def preprocess(x):
         return None
 
 
-def mask_seq(seq, num_chunks, chunk_width):
-    # randomly masking contiguous sections of the sequence
-    # making sure the separation between chunks is at least chunk_width
-
+def mask_seq(seq, num_chunks: int, chunk_width: int):
+    """Randomly masks contiguous sections of the sequence, ensuring separation between chunks is at least chunk_width."""
     len_ = seq.shape[0]
     num_chunks = num_chunks
     chunk_width = chunk_width
@@ -73,7 +79,8 @@ def mask_seq(seq, num_chunks, chunk_width):
     return masked_seq
 
 
-def slice(x, section_length: int = 10, overlap: int = 5):
+def slice(x, section_length: int = 20, overlap: int = 10):
+    """Slices a 1D array into sections of length 'section_length' with overlap 'overlap'."""
     start_indices = np.arange(0, len(x) - overlap, section_length - overlap)
     sections = [x[start : start + section_length] for start in start_indices]
 
