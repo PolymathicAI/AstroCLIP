@@ -67,7 +67,6 @@ For python-based LazyConfig, use "path.key=value".
         nargs=argparse.REMAINDER,
     )
 
-    parser.add_argument("--run-name", default="00", help="run name for wandb")
     parser.add_argument("--group-name", default="test", help="group name for wandb")
 
     return parser
@@ -341,7 +340,9 @@ def do_train(cfg, model, resume=False):
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
-def main(args):
+def main_cli():
+    args = get_args_parser(add_help=True).parse_args()
+
     # set up wandb
     global_rank = int(os.environ.get("RANK", 0))
     if global_rank == 0:
@@ -349,7 +350,6 @@ def main(args):
             project="astrodino",
             entity=format_with_env("{WANDB_ENTITY_NAME}"),
             group=args.group_name,
-            name=args.run_name,
             resume="allow",
             dir=f"{ASTROCLIP_ROOT}/outputs/astroclip_image",
             allow_val_change=True,
@@ -375,5 +375,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    args = get_args_parser(add_help=True).parse_args()
-    main(args)
+    main_cli()
