@@ -147,11 +147,8 @@ class DesiSSL(datasets.GeneratorBasedBuilder):
                     dset_range = (int(0.8 * dset_size), dset_size)
 
                 for j in range(dset_range[0], dset_range[1]):
-                    rgb_img = dr2_rgb(
-                        np.array(images[j]).astype("float32"), bands=["g", "r", "z"]
-                    )
                     yield str(targetids[j]), {
-                        "image": rgb_img,
+                        "image": np.array(images[j]).astype("float32"),
                         "spectrum": np.reshape(spectra[j], [-1, 1]).astype("float32"),
                         "redshift": redshifts[j],
                         "targetid": targetids[j],
