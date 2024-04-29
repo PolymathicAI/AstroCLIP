@@ -39,8 +39,9 @@ jobs:
           cache: pip
       - name: "Install dependencies"
         run: |
-            python -m pip install .
             python -m pip install torch lightning[extra] # Extra dependency since we don't want to force user to use torch version
+            pip install --extra-index-url https://pypi.nvidia.com cuml-cu11
+            python -m pip install .
       - name: "Check dependencies aren't broken"
         run: python -m pip check
       - name: "Check package can be imported"
