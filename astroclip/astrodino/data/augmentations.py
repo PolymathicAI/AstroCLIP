@@ -6,6 +6,7 @@
 import logging
 from typing import Sequence
 
+import numpy as np
 from dinov2.data.transforms import GaussianBlur, make_normalize_transform
 from torchvision import transforms
 
