@@ -10,9 +10,9 @@ from ..specformer.preprocessing import preprocess
 class ImageModule(nn.Module):
     def __init__(
         self,
-        save_directory: str,
         config: str,
         model_weights: str,
+        save_directory: str,
         embed_dim: int = 1024,
         n_head: int = 4,
         model_embed_dim: int = 1024,
@@ -88,7 +88,8 @@ class ImageModule(nn.Module):
 class SpectrumModule(nn.Module):
     def __init__(
         self,
-        save_path: str,
+        config: str,
+        model_weights: str,
         embed_dim: int = 1024,
         n_head: int = 4,
         model_embed_dim: int = 768,
@@ -110,7 +111,7 @@ class SpectrumModule(nn.Module):
         super().__init__()
         # Load the model from the checkpoint
         # TODO: merge from refactor/spectrum
-        checkpoint = torch.load(save_path)
+        checkpoint = torch.load(model_weights)
         self.config = checkpoint["config"]
         self.backbone = SpecFormer(**self.config)
         self.backbone.load_from_checkpoint(checkpoint["state_dict"])
