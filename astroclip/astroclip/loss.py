@@ -9,8 +9,8 @@ from torch import nn
 class CLIPLoss(nn.Module):
     def get_logits(
         self,
-        image_features: Array[torch.FloatTensor, "b c"],
-        spectrum_features: Array[torch.FloatTensor, "b c"],
+        image_features: torch.FloatTensor,
+        spectrum_features: torch.FloatTensor,
         logit_scale: float,
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
         # Normalize image features
@@ -25,8 +25,8 @@ class CLIPLoss(nn.Module):
 
     def forward(
         self,
-        image_features: Array[torch.FloatTensor, "b c"],
-        spectrum_features: Array[torch.FloatTensor, "b c"],
+        image_features: torch.FloatTensor,
+        spectrum_features: torch.FloatTensor,
         logit_scale: float,
         output_dict: bool = False,
     ) -> torch.FloatTensor:

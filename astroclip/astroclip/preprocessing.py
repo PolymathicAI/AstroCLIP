@@ -4,11 +4,10 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data.dataloader import default_collate
 from torchvision.transforms import CenterCrop
 
-from astroclip.astrodino.data.datasets.legacysurvey import dr2_rgb
-from astroclip.specformer.preprocessing import preprocess as preprocess_spectrum
+from astroclip.astrodino.data.dataset import dr2_rgb
 
 
-class ImageSpectrumCollator:
+class AstroClipCollator:
     def __init__(self, center_crop: int = 144):
         self.center_crop = CenterCrop(center_crop)
 
@@ -25,31 +24,9 @@ class ImageSpectrumCollator:
         images = self.center_crop(images.permute(0, 3, 2, 1))
         return images
 
-    def _process_spectra(self, spectra):
-        # slice the spectra
-        spectra = [
-            preprocess_spectrum(spectrum)
-            for spectrum in spectra
-            if np.array(spectrum).std() > 0
-        ]
-
-        # pad the spectra
-        spectra = pad_sequence(
-            [torch.tensor(spectrum) for spectrum in spectra],
-            batch_first=True,
-            padding_value=0,
-        )
-
-        return spectra
-
     def __call__(self, samples):
         # collate and handle dimensions
         samples = default_collate(samples)
-
         # process images
         samples["image"] = self._process_images(samples["image"])
-
-        # process spectra
-        samples["spectrum"] = self._process_spectra(samples["spectrum"])
-
         return samples

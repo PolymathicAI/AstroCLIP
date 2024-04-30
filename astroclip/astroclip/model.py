@@ -1,22 +1,22 @@
 from typing import Dict
 
+import lightning as L
 import numpy as np
 import torch
 import torch.nn as nn
-from pytorch_lightning import LightningModule as L
 from torch.optim import lr_scheduler
 
 from astroclip.astroclip.loss import CLIPLoss
 
-__all__ = ["AstroCLIP"]
+__all__ = ["AstroClipModel"]
 
 
-class AstroCLIP(L.LightningModule):
+class AstroClipModel(L.LightningModule):
     def __init__(
         self,
         image_encoder: nn.Module,
         spectrum_encoder: nn.Module,
-        temperature: float,
+        temperature: float = 15.5,
         lr: float = 1e-4,
         weight_decay: float = 0.05,
         epochs: int = 100,
@@ -81,46 +81,42 @@ class AstroCLIP(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         im, sp = batch["image"], batch["spectrum"]
+
+        # Get the image and spectrum features
         image_features = self.image_encoder(im)
         spectrum_features = self.spectrum_encoder(sp)
+
+        # Calculate the CLIP loss
         loss_withlogit = self.criterion(
             image_features, spectrum_features, self.hparams.temperature
         )
-        self.log("train_loss_withlogit", loss_withlogit)
         loss_nologit = self.criterion(
             image_features, spectrum_features, self.hparams.logit_scale
         )
+
+        # Log the losses
+        self.log("train_loss_withlogit", loss_withlogit)
         self.log("train_loss_nologit", loss_nologit)
         self.log("scale", self.logit_scale)
+
+        # Return the loss
         return loss_withlogit
 
     def validation_step(self, batch, batch_idx):
         im, sp = batch["image"], batch["spectrum"]
+
+        # Get the image and spectrum features
         image_features = self.image_encoder(im)
         spectrum_features = self.spectrum_encoder(sp)
+
+        # Calculate the CLIP loss
         val_loss_nologit = self.criterion(
             image_features, spectrum_features, self.hparams.logit_scale
         )
-        self.log("val_loss_nologit", val_loss_nologit)
         val_loss_withlogit = self.criterion(
             image_features, spectrum_features, self.hparams.temperature
         )
-        self.log("val_loss_withlogit", val_loss_withlogit)
 
-    def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(
-            self.parameters(),
-            lr=self.hparams.lr,
-            weight_decay=self.hparams.weight_decay,
-        )
-        scheduler = lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=self.hparams.T_max, eta_min=self.hparams.eta_min
-        )
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": scheduler,
-                "interval": "epoch",  # or 'step' for step-wise updating
-                "frequency": 1,  # how often to apply
-            },
-        }
+        # Log the losses
+        self.log("val_loss_nologit", val_loss_nologit)
+        self.log("val_loss_withlogit", val_loss_withlogit)

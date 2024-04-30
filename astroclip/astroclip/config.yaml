@@ -3,9 +3,8 @@ trainer:
   default_root_dir: "{ASTROCLIP_ROOT}/outputs"
   enable_checkpointing: true
   gradient_clip_val: 1.
-  max_steps: 500_000
+  max_epochs: 100
   precision: null
-  limit_val_batches: 100
   callbacks:
     - class_path: LearningRateMonitor
       init_args:
@@ -20,38 +19,39 @@ trainer:
       entity: "{WANDB_ENTITY_NAME}"
       save_dir: ${trainer.default_root_dir}
 model:
-  class_path: SpecFormer
+  class_path: AstroClipModel
   init_args:
-    input_dim: 22
-    embed_dim: 768
-    num_layers: 6
-    num_heads: 6
-    max_len: 800
-    dropout: 0.
+    image_encoder:
+      class_path: astroclip.astroclip.modules.image.ImageModule
+      init_args:
+        config: "/mnt/home/lparker/Documents/AstroFoundationModel/AstroDino_legacy/astrodino/configs/ssl_default_config.yaml"
+        model_weights: "/mnt/home/lparker/ceph/astrodino/vitl12_simplified_better_wd/training_199999/teacher_checkpoint.pth"
+        save_directory: "/mnt/home/lparker/ceph/dino_training"
+    spectrum_encoder:
+      class_path: astroclip.astroclip.modules.spectrum.SpectrumModule
+      init_args:
+        model_path: "/mnt/home/sgolkar/ceph/saves/fillm/run-seqformer-2708117"
 data:
   class_path: AstroClipDataloader
   init_args:
     path: "{ASTROCLIP_ROOT}/datasets/astroclip_file/"
     columns:
+      - image
       - spectrum
     batch_size: 64
     num_workers: 0
     collate_fn:
-      class_path: astroclip.specformer.preprocessing.SpectrumCollator
+      class_path: astroclip.astroclip.preprocessing.AstroClipCollator
       init_args:
-        num_chunks: 6
-        chunk_width: 50
+        crop_size: 144
 optimizer:
   class_path: torch.optim.adamw.AdamW
   init_args:
-    lr: 1e-5
-    weight_decay: 1e-1
-    betas:
-      - 0.9
-      - 0.95
+    lr: 1e-4
+    weight_decay: 0.05
 lr_scheduler:
   class_path: scheduler.CosineAnnealingWithWarmupLR
   init_args:
-    T_max: ${trainer.max_steps}
+    T_max: 100
     T_warmup: 2000
-    eta_min: ${eval:'${optimizer.init_args.lr}//100'}
+    eta_min: ${eval:'${optimizer.init_args.lr}//500'}
