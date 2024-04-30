@@ -61,10 +61,23 @@ class AstroCLIP(L.LightningModule):
         return_weights: bool = False,
     ):
         im, sp = batch["image"], batch["spectrum"]
-        image_features = self.image_encoder(im)
-        spectrum_features = self.spectrum_encoder(sp)
 
-        return {"image": image_features, "spectrum": spectrum_features}
+        if not return_weights:
+            image_features = self.image_encoder(im)
+            spectrum_features = self.spectrum_encoder(sp)
+            return {"image": image_features, "spectrum": spectrum_features}
+
+        else:
+            image_features, image_weights = self.image_encoder(im, return_weights=True)
+            spectrum_features, spectrum_weights = self.spectrum_encoder(
+                sp, return_weights=True
+            )
+            return {
+                "image": image_features,
+                "spectrum": spectrum_features,
+                "image_weights": image_weights,
+                "spectrum_weights": spectrum_weights,
+            }
 
     def training_step(self, batch, batch_idx):
         im, sp = batch["image"], batch["spectrum"]
