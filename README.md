@@ -12,19 +12,32 @@ pip install --upgrade eventlet torch lightning[extra]
 pip install -e .
 ```
 
+
+## Training Single-Modal SSL Models
+
+### Image encoder:
+The AstroDINO model is based on the DINO_v2 model and can be run from the astrodino subdirectory.
+
+Run with
+```
+image_trainer -c astroclip/astrodino/config.yaml
+```
+
 ### Spectrum encoder:
 
 Run with
 ```
 spectrum_trainer -c astroclip/specformer/config.yaml
+
 ```
 
-## Training Single-Modal SSL Models
+## Training alignment model
 
-### AstroDINO
-The AstroDINO model is based on the DINO_v2 model and can be run from the astrodino subdirectory.
+AstroCLIP model can be run with:
+```
 
-Once in the subdirectory, run with
 ```
-image_trainer -c astroclip/astrodino/config.yaml
-```
+
+## Downstream Tasks
+
+TODO
