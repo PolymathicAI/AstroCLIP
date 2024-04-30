@@ -8,7 +8,7 @@
 #SBATCH --gpus-per-node=2
 #SBATCH --cpus-per-gpu=8
 #SBATCH --mem=20G
-#SBATCH --output=logs/timeseries-%j.log
+#SBATCH --output=logs/astroclip-%j.log
 #SBATCH --time=15:00:00
 
 module load nccl

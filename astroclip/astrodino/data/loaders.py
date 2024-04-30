@@ -1,7 +1,4 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-#
-# This source code is licensed under the Apache License, Version 2.0
-# found in the LICENSE file in the root directory of this source tree.
+# Overriding default Dinov2 data loader function
 
 import logging
 from enum import Enum
@@ -11,7 +8,7 @@ import torch
 from dinov2.data.samplers import EpochSampler, InfiniteSampler, ShardedInfiniteSampler
 from torch.utils.data import Sampler
 
-from .datasets import LegacySurvey, LegacySurveyNorth
+from .dataset import LegacySurvey, LegacySurveyNorth
 
 logger = logging.getLogger("dinov2")
 
@@ -22,25 +19,6 @@ class SamplerType(Enum):
     INFINITE = 2
     SHARDED_INFINITE = 3
     SHARDED_INFINITE_NEW = 4
-
-
-def _make_bool_str(b: bool) -> str:
-    return "yes" if b else "no"
-
-
-def _make_sample_transform(
-    image_transform: Optional[Callable] = None,
-    target_transform: Optional[Callable] = None,
-):
-    def transform(sample):
-        image, target = sample
-        if image_transform is not None:
-            image = image_transform(image)
-        if target_transform is not None:
-            target = target_transform(target)
-        return image, target
-
-    return transform
 
 
 def _parse_dataset_str(dataset_str: str):

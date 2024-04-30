@@ -7,23 +7,17 @@
 #SBATCH --gpus=20
 #SBATCH --tasks-per-node=4
 #SBATCH --cpus-per-task=12
+#SBATCH --output=logs/astrodino-%j.log
 
 module purge
 module load python
 module load cuda
-source /mnt/home/lparker/python_envs/dino/bin/activate
-
-# --- SPECIFY THE FOLLOWING ---
 
 run_name="astroclip_refactor_final"
-config="config.yaml"
-
-# -----------------------------
+config="astroclip/astrodino/config.yaml"
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-export PYTHONPATH=/mnt/home/flanusse/.local/lib/python3.10/site-packages:/mnt/home/lparker/Documents/AstroFoundationModel/AstroDino/dinov2/
+source .local/env.sh
 
-srun python -m astrodino.train.train \
+srun python -m astroclip.astrodino.trainer \
     --config-file=$config \
-    --output-dir=/mnt/home/lparker/ceph/astroclip_final_refactor \
-    --run-name=$run_name \
