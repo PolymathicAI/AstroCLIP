@@ -57,23 +57,18 @@ class AstroCLIP(L.LightningModule):
 
     def forward(
         self,
-        x: Dict[str, Dict[str, torch.FloatTensor]],
-        image: bool = True,
+        batch: Dict[str, Dict[str, torch.FloatTensor]],
         return_weights: bool = False,
     ):
-        # Embed image
-        if image:
-            embedding = self.image_encoder((x, None))
+        im, sp = batch["image"], batch["spectrum"]
+        image_features = self.image_encoder(im)
+        spectrum_features = self.spectrum_encoder(sp)
 
-        # Embed spectrum
-        else:
-            embedding = self.spectrum_encoder(x, return_weights=return_weights)
-
-        return embedding
+        return {"image": image_features, "spectrum": spectrum_features}
 
     def training_step(self, batch, batch_idx):
-        im, sp, _ = batch
-        image_features = self.image_encoder((im.cuda(), None))
+        im, sp = batch["image"], batch["spectrum"]
+        image_features = self.image_encoder(im)
         spectrum_features = self.spectrum_encoder(sp)
         loss_withlogit = self.criterion(
             image_features, spectrum_features, self.hparams.temperature
@@ -87,8 +82,8 @@ class AstroCLIP(L.LightningModule):
         return loss_withlogit
 
     def validation_step(self, batch, batch_idx):
-        im, sp, _ = batch
-        image_features = self.image_encoder((im.cuda(), None))
+        im, sp = batch["image"], batch["spectrum"]
+        image_features = self.image_encoder(im)
         spectrum_features = self.spectrum_encoder(sp)
         val_loss_nologit = self.criterion(
             image_features, spectrum_features, self.hparams.logit_scale
