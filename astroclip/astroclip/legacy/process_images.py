@@ -154,6 +154,7 @@ images = torch.cat(images)
 spectra = torch.cat(spectra)
 targetids = torch.cat(targetids)
 
+# TODO: needs refactoring
 torch.save(images, "/mnt/home/lparker/ceph/images_val.pt")
 torch.save(spectra, "/mnt/home/lparker/ceph/spectra_val.pt")
 torch.save(targetids, "/mnt/home/lparker/ceph/targetids_val.pt")

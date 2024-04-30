@@ -1,5 +1,5 @@
 train:
-  dataset_path: LegacySurvey:split=train:root=/mnt/ceph/users/polymathic/external_data/astro/DECALS_Stein_et_al/:extra=""
+  dataset_path: LegacySurvey:split=train:root={ASTROCLIP_ROOT}/datasets/decals:extra=""
   batch_size_per_gpu: 64
 student:
   arch: vit_large
