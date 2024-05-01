@@ -20,22 +20,29 @@ class CrossAttentionHead(nn.Module):
     :param dropout: amount of dropout
     """
 
+    embed_dim: int
+    n_head: int
+    model_embed_dim: int
+    dropout: float
+
     def __init__(
         self,
-        **kwargs,
+        embed_dim: int,
+        n_head: int,
+        model_embed_dim: int,
+        dropout: float,
     ):
-        """Multihead cross-attention layer with dropout."""
         super().__init__()
-        self.query = nn.Parameter(torch.randn(1, 1, kwargs["embed_dim"]))
+        self.query = nn.Parameter(torch.randn(1, 1, embed_dim))
         self.multihead_attn = nn.MultiheadAttention(
-            embed_dim=kwargs["embed_dim"],
-            num_heads=kwargs["n_head"],
+            embed_dim=embed_dim,
+            num_heads=n_head,
             batch_first=True,
-            kdim=kwargs["model_embed_dim"],
-            vdim=kwargs["model_embed_dim"],
+            kdim=model_embed_dim,
+            vdim=model_embed_dim,
         )
-        self.layernorm = nn.LayerNorm(kwargs["embed_dim"])
-        self.dropout = nn.Dropout(kwargs["dropout"])
+        self.layernorm = nn.LayerNorm(embed_dim)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.tensor):
         batch_size = x.shape[0]
