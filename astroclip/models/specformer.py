@@ -85,7 +85,7 @@ class SpecFormer(L.LightningModule):
 
         return x
 
-    def forward(self, x, sliced: bool = False):
+    def forward(self, x: torch.Tensor, sliced: bool = False) -> torch.Tensor:
         """Forward pass through the model. If you have already sliced the input, set sliced to True."""
         # Pass through slicing function if not already sliced
         if not sliced:
@@ -165,7 +165,7 @@ class SpecFormer(L.LightningModule):
         return loss
 
 
-def mask_seq(seq, num_chunks: int, chunk_width: int):
+def mask_seq(seq: torch.Tensor, num_chunks: int, chunk_width: int) -> torch.Tensor:
     """Randomly masks contiguous sections of the sequence, ensuring separation between chunks is at least chunk_width."""
     len_ = seq.shape[0]
     num_chunks = num_chunks
