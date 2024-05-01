@@ -342,7 +342,8 @@ class TiedLinear(nn.Module):
         )
 
 
-def _init_by_depth(module: nn.Module, depth: int):
+def _init_by_depth(module: nn.Module, depth: int) -> None:
+    """Initialize the weights of a module based on the depth of the model."""
     if isinstance(module, nn.Linear):
         fan_in = module.weight.size(-1)
         std = 1 / math.sqrt(2 * fan_in * depth)
