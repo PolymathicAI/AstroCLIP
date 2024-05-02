@@ -8,6 +8,7 @@ from functools import partial
 
 import torch
 import wandb
+from dinov2 import distributed as distributed
 from dinov2.data import (
     DataAugmentationDINO,
     MaskingGenerator,
@@ -21,15 +22,14 @@ from dinov2.utils.utils import CosineScheduler
 from fvcore.common.checkpoint import PeriodicCheckpointer
 from omegaconf import OmegaConf
 
-from astroclip.astrodino import distributed as distributed
 from astroclip.astrodino.data.augmentations import DataAugmentationAstroDINO
 from astroclip.astrodino.data.loaders import make_data_loader, make_dataset
 from astroclip.astrodino.utils import MetricLogger
 from astroclip.env import format_with_env
 
-torch.backends.cuda.matmul.allow_tf32 = (
-    True  # PyTorch 1.12 sets this to False by default
-)
+# PyTorch 1.12 sets this to False by default
+torch.backends.cuda.matmul.allow_tf32 = True
+
 logger = logging.getLogger("dinov2")
 ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
 
@@ -255,6 +255,7 @@ def do_train(cfg, model, run_name, group_name, resume=False):
             project="astrodino",
             entity=format_with_env("{WANDB_ENTITY_NAME}"),
             name=run_name,
+            group=group_name,
             resume="allow",
             dir=f"{ASTROCLIP_ROOT}/outputs/astroclip_image",
             allow_val_change=True,
