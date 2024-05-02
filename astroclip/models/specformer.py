@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from astroclip.modules import LayerNorm, TransformerBlock, _init_by_depth
+from ..modules import LayerNorm, TransformerBlock, _init_by_depth
 
 
 class SpecFormer(L.LightningModule):

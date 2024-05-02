@@ -7,8 +7,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from dinov2.eval.setup import setup_and_build_model
 
-from astroclip.models import SpecFormer
-from astroclip.modules import MLP, CrossAttentionHead
+from ..modules import MLP, CrossAttentionHead
+from .specformer import SpecFormer
 
 
 class AstroClipModel(L.LightningModule):

@@ -26,7 +26,7 @@ model:
       class_path: astroclip.models.astroclip.ImageHead
       init_args:
         config: "astroclip/astrodino/config.yaml"
-        model_weights: "/mnt/home/lparker/ceph/astrodino/vitl12_simplified_better_wd/training_199999/teacher_checkpoint.pth"
+        model_weights: "{ASTROCLIP_ROOT}/pretrained.astrodino.ckpt"
         save_directory: "{ASTROCLIP_ROOT}/outputs/astrodino"
     spectrum_encoder:
       class_path: astroclip.models.astroclip.SpectrumHead

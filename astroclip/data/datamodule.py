@@ -7,7 +7,7 @@ from torch import Tensor
 from torch.utils.data.dataloader import default_collate
 from torchvision.transforms import CenterCrop
 
-from astroclip.astrodino.data.dataset import dr2_rgb
+from ..astrodino.data.dataset import dr2_rgb
 
 
 class AstroClipDataloader(L.LightningDataModule):

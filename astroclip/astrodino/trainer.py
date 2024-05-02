@@ -63,6 +63,7 @@ For python-based LazyConfig, use "path.key=value".
         default=None,
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument("--run-name", default="00", help="run name for wandb")
 
     parser.add_argument("--group-name", default="test", help="group name for wandb")
 
@@ -150,7 +151,7 @@ def do_test(cfg, model, iteration):
         torch.save({"teacher": new_state_dict}, teacher_ckp_path)
 
 
-def do_train(cfg, model, resume=False):
+def do_train(cfg, model, run_name, group_name, resume=False):
     model.train()
     inputs_dtype = torch.half
     fp16_scaler = model.fp16_scaler  # for mixed precision training
@@ -170,7 +171,7 @@ def do_train(cfg, model, resume=False):
 
     checkpointer = FSDPCheckpointer(
         model,
-        f"{ASTROCLIP_ROOT}/outputs/astroclip_image/{wandb.run.id}",
+        f"{ASTROCLIP_ROOT}/outputs/astroclip_image/{run_name}",
         optimizer=optimizer,
         save_to_disk=True,
     )
@@ -247,9 +248,20 @@ def do_train(cfg, model, resume=False):
         drop_last=True,
         collate_fn=collate_fn,
     )
+    # set up wandb
+    global_rank = int(os.environ.get("RANK", 0))
+    if global_rank == 0:
+        wandb.init(
+            project="astrodino",
+            entity=format_with_env("{WANDB_ENTITY_NAME}"),
+            name=run_name,
+            resume="allow",
+            dir=f"{ASTROCLIP_ROOT}/outputs/astroclip_image",
+            allow_val_change=True,
+        )
+        wandb.run.config.update(OmegaConf.to_object(cfg))
 
     # training loop
-
     iteration = start_iter
 
     logger.info("Starting training from iteration {}".format(start_iter))
@@ -257,10 +269,12 @@ def do_train(cfg, model, resume=False):
         ASTROCLIP_ROOT,
         "outputs",
         "astroclip_image",
-        wandb.run.id,
+        run_name,
         "training_metrics.json",
     )
-    metric_logger = MetricLogger(delimiter="  ", wandb=wandb, output_file=metrics_file)
+    metric_logger = MetricLogger(
+        delimiter="  ", wandb=wandb.run, output_file=metrics_file
+    )
     header = "Training"
 
     for data in metric_logger.log_every(data_loader, 25, header, max_iter, start_iter):
@@ -339,20 +353,10 @@ def do_train(cfg, model, resume=False):
 def main_cli(cli_args=None):
     args = get_args_parser(add_help=True).parse_args(cli_args)
 
-    # set up wandb
-    global_rank = int(os.environ.get("RANK", 0))
-    if global_rank == 0:
-        wandb.init(
-            project="astrodino",
-            entity=format_with_env("{WANDB_ENTITY_NAME}"),
-            group=args.group_name,
-            resume="allow",
-            dir=f"{ASTROCLIP_ROOT}/outputs/astroclip_image",
-            allow_val_change=True,
-        )
-    args.output_dir = f"{ASTROCLIP_ROOT}/outputs/astroclip_image/{wandb.run.id}"
+    run_name = str(args.run_name)
+    args.output_dir = f"{ASTROCLIP_ROOT}/outputs/astroclip_image/{run_name}"
+
     cfg = setup(args)
-    wandb.run.config.update(OmegaConf.to_object(cfg))
 
     model = SSLMetaArch(cfg).to(torch.device("cuda"))
     model.prepare_for_distributed_training()
@@ -367,7 +371,7 @@ def main_cli(cli_args=None):
         )
         return do_test(cfg, model, f"manual_{iteration}")
 
-    do_train(cfg, model, resume=not args.no_resume)
+    do_train(cfg, model, run_name, args.group_name, resume=not args.no_resume)
 
 
 if __name__ == "__main__":
