@@ -7,7 +7,7 @@ from torch import Tensor
 from torch.utils.data.dataloader import default_collate
 from torchvision.transforms import CenterCrop
 
-from ..astrodino.data.dataset import dr2_rgb
+from ..astrodino.data.astro_augmentations import ToRGB
 
 
 class AstroClipDataloader(L.LightningDataModule):
@@ -47,15 +47,22 @@ class AstroClipDataloader(L.LightningDataModule):
 
 
 class AstroClipCollator:
-    def __init__(self, center_crop: int = 144):
+    def __init__(
+            self, 
+            center_crop: int = 144, 
+            bands: List[str] = ["g", "r", "z"], 
+            m: float = 0.03, 
+            Q: int = 20
+        ):
         self.center_crop = CenterCrop(center_crop)
+        self.to_rgb = ToRGB(bands=bands, m=m, Q=Q)
 
     def _process_images(self, images):
         # convert to rgb
         img_outs = []
         for img in images:
             rgb_img = torch.tensor(
-                dr2_rgb(img.permute(2, 0, 1), bands=["g", "r", "z"])[None, :, :, :]
+                self.to_rgb(img, bands=["g", "r", "z"])[None, :, :, :]
             )
             img_outs.append(rgb_img)
         images = torch.concatenate(img_outs)

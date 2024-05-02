@@ -19,7 +19,7 @@ run_name="astroclip_$random_number"
 config="astroclip/astrodino/config.yaml"
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-source .local/env.sh
+source /mnt/home/lparker/python_envs/toto/bin/activate
 
 srun python -m astroclip.astrodino.trainer \
     --config-file=$config --run-name=$run_name
