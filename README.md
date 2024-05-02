@@ -27,7 +27,7 @@ image_trainer -c astroclip/astrodino/config.yaml
 
 Run with
 ```
-spectrum_trainer -c astroclip/specformer/config.yaml
+spectrum_trainer fit -c config/specformer.yaml
 
 ```
 
@@ -35,7 +35,7 @@ spectrum_trainer -c astroclip/specformer/config.yaml
 
 AstroCLIP model can be run with:
 ```
-
+spectrum_trainer fit -c config/astroclip.yaml
 ```
 
 ## Downstream Tasks

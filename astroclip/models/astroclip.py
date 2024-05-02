@@ -5,8 +5,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from dinov2.eval.setup import setup_and_build_model
 
-__all__ = ["AstroClipModel", "CLIPLoss"]
+from astroclip.models import SpecFormer
+from astroclip.modules import MLP, CrossAttentionHead
 
 
 class AstroClipModel(L.LightningModule):
@@ -158,3 +160,160 @@ class CLIPLoss(nn.Module):
             + F.cross_entropy(logits_per_spectrum, labels)
         ) / 2
         return {"contrastive_loss": total_loss} if output_dict else total_loss
+
+
+class ImageHead(nn.Module):
+    def __init__(
+        self,
+        config: str,
+        model_weights: str,
+        save_directory: str,
+        embed_dim: int = 1024,
+        n_head: int = 4,
+        model_embed_dim: int = 1024,
+        dropout: float = 0.1,
+        freeze_backbone: bool = True,
+    ):
+        """
+        Cross-attention image module that takes token outputs from the AstroDINO model and passes them through a
+        cross-attention mechanism and MLP to get the final embedding.
+
+        Args:
+            save_directory (str): Path to the directory containing the AstroDINO model.
+            config (str): Path to the configuration file of the AstroDINO model.
+            model_weights (str): Path to the weights of the AstroDINO model.
+            embed_dim (int): Dimension of the AstroCLIP embedding.
+            n_head (int): Number of heads in the multihead attention.
+            model_embed_dim (int): Dimension of the AstroDINO embedding.
+            dropout (float): Dropout rate for MLP layers.
+            freeze_backbone (bool): Whether to freeze the backbone of the AstroDINO model.
+        """
+        super().__init__()
+
+        class config:
+            output_dir = save_directory
+            config_file = config
+            pretrained_weights = model_weights
+            opts = []
+
+        # Define DINO model
+        self.backbone, _ = setup_and_build_model(config())
+
+        # Forward the image backbone of DINO model
+        def forward_image_backbone(self, x: torch.Tensor) -> torch.Tensor:
+            x = self.patch_embed(x)
+            for blk in self.blocks:
+                x = blk(x)
+            return self.norm(x)
+
+        self.backbone.forward = forward_image_backbone.__get__(self.backbone)
+
+        # Freeze backbone if necessary
+        self.freeze_backbone = freeze_backbone
+        if self.freeze_backbone:
+            for param in self.backbone.parameters():
+                param.requires_grad = False
+
+        # Set up cross-attention
+        self.cross_attention = CrossAttentionHead(
+            embed_dim=embed_dim,
+            n_head=n_head,
+            model_embed_dim=model_embed_dim,
+            dropout=dropout,
+        )
+
+        # Set up MLP
+        self.mlp = MLP(
+            in_features=embed_dim,
+            hidden_features=4 * embed_dim,
+            dropout=dropout,
+        )
+
+    def forward(self, x: torch.tensor, return_weights: bool = False):
+        # Pass through the backbone
+        if self.freeze_backbone:
+            with torch.no_grad():
+                embedding = self.backbone(x)
+        else:
+            embedding = self.backbone(x)
+
+        # Pass through cross-attention
+        x, attentions = self.cross_attention(embedding)
+
+        # Pass through MLP and residual connection
+        x = x + self.mlp(x)
+
+        if return_weights:
+            return x.squeeze(), attentions[1]
+
+        return x.squeeze()
+
+
+class SpectrumHead(nn.Module):
+    def __init__(
+        self,
+        model_path: str,
+        embed_dim: int = 1024,
+        n_head: int = 4,
+        model_embed_dim: int = 768,
+        dropout: float = 0.1,
+        freeze_backbone: bool = True,
+    ):
+        """
+        Cross-attention spectrum module that takes a spectrum and passes it through a pretrained SpecFormer model and
+        then through a cross-attention mechanism and MLP to get the final embedding.
+
+        Args:
+            save_path (str): Path to the checkpoint of the SpecFormer model.
+            embed_dim (int): Dimension of the AstroCLIP embedding.
+            n_head (int): Number of heads in the multihead attention.
+            model_embed_dim (int): Dimension of the SpecFormer embedding.
+            dropout (float): Dropout rate for MLP layers.
+            freeze_backbone (bool): Whether to freeze the backbone of the SpecFormer model.
+        """
+        super().__init__()
+        # Load the model from the checkpoint
+        checkpoint = torch.load(model_path)
+        self.backbone = SpecFormer(**checkpoint["hyper_parameters"])
+
+        # Freeze backbone if necessary
+        self.freeze_backbone = freeze_backbone
+        if self.freeze_backbone:
+            for param in self.backbone.parameters():
+                param.requires_grad = False
+
+        # Set up cross-attention
+        self.cross_attention = CrossAttentionHead(
+            embed_dim=embed_dim,
+            n_head=n_head,
+            model_embed_dim=model_embed_dim,
+            dropout=dropout,
+        )
+
+        # Set up MLP
+        self.mlp = MLP(
+            in_features=embed_dim,
+            hidden_features=4 * embed_dim,
+            dropout=dropout,
+        )
+
+    def forward(
+        self, x: torch.tensor, y: torch.tensor = None, return_weights: bool = False
+    ):
+        # Embed the spectrum using the pretrained model
+        if self.freeze_backbone:
+            with torch.no_grad():
+                embedding = self.backbone(x)["embedding"]
+        else:
+            embedding = self.backbone(x)["embedding"]
+
+        # Pass through cross-attention
+        x, attentions = self.cross_attention(embedding)
+
+        # Pass through MLP and residual connection
+        x = x + self.mlp(x)
+
+        if return_weights:
+            return x.squeeze(), attentions[1]
+
+        return x.squeeze()

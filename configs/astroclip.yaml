@@ -18,19 +18,20 @@ trainer:
       project: "astroclip-alignment"
       entity: "{WANDB_ENTITY_NAME}"
       save_dir: ${trainer.default_root_dir}
+  detect_anomaly: True
 model:
   class_path: AstroClipModel
   init_args:
     image_encoder:
-      class_path: astroclip.astroclip.modules.image.ImageModule
+      class_path: astroclip.models.astroclip.ImageHead
       init_args:
-        config: "/mnt/home/lparker/Documents/AstroFoundationModel/AstroDino_legacy/astrodino/configs/ssl_default_config.yaml"
+        config: "astroclip/astrodino/config.yaml"
         model_weights: "/mnt/home/lparker/ceph/astrodino/vitl12_simplified_better_wd/training_199999/teacher_checkpoint.pth"
-        save_directory: "/mnt/home/lparker/ceph/dino_training"
+        save_directory: "{ASTROCLIP_ROOT}/outputs/astrodino"
     spectrum_encoder:
-      class_path: astroclip.astroclip.modules.spectrum.SpectrumModule
+      class_path: astroclip.models.astroclip.SpectrumHead
       init_args:
-        model_path: "/mnt/home/sgolkar/ceph/saves/fillm/run-seqformer-2708117"
+        model_path: "{ASTROCLIP_ROOT}/pretrained/specformer.ckpt"
 data:
   class_path: AstroClipDataloader
   init_args:
@@ -41,16 +42,16 @@ data:
     batch_size: 64
     num_workers: 0
     collate_fn:
-      class_path: astroclip.astroclip.preprocessing.AstroClipCollator
+      class_path: astroclip.data.AstroClipCollator
       init_args:
-        crop_size: 144
+        center_crop: 144
 optimizer:
   class_path: torch.optim.adamw.AdamW
   init_args:
     lr: 1e-4
     weight_decay: 0.05
 lr_scheduler:
-  class_path: scheduler.CosineAnnealingWithWarmupLR
+  class_path: astroclip.CosineAnnealingWithWarmupLR
   init_args:
     T_max: 100
     T_warmup: 2000

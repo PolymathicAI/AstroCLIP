@@ -13,10 +13,9 @@
 # limitations under the License.
 """Joint dataset of DESI Legacy Survey and DESI Early Data Release."""
 
+import datasets
 import h5py
 import numpy as np
-
-import datasets
 
 _CITATION = """
 """

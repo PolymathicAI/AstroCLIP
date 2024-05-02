@@ -1,4 +1,3 @@
-import copy
 import math
 
 import lightning as L
@@ -6,8 +5,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import Tensor
 
-from astroclip.modules.common import LayerNorm, TransformerBlock, _init_by_depth
+from astroclip.modules import LayerNorm, TransformerBlock, _init_by_depth
 
 
 class SpecFormer(L.LightningModule):
@@ -18,10 +18,10 @@ class SpecFormer(L.LightningModule):
         num_layers: int,
         num_heads: int,
         max_len: int,
-        num_chunks: int = 6,
-        chunk_width: int = 50,
-        section_length: int = 20,
-        overlap: int = 10,
+        mask_num_chunks: int = 6,
+        mask_chunk_width: int = 50,
+        slice_section_length: int = 20,
+        slice_overlap: int = 10,
         dropout: float = 0.1,
         norm_first: bool = False,
     ):
@@ -48,48 +48,15 @@ class SpecFormer(L.LightningModule):
 
         self._reset_parameters_datapt()
 
-    def _reset_parameters_datapt(self):
-        # not scaling the initial embeddngs.
-        for emb in [self.data_embed, self.position_embed]:
-            std = 1 / math.sqrt(self.hparams.embed_dim)
-            nn.init.trunc_normal_(emb.weight, std=std, a=-3 * std, b=3 * std)
+    def forward(self, x: Tensor) -> torch.Tensor:
+        """Forward pass through the model."""
+        x = self.preprocess(x)
+        return self.forward_without_preprocessing(x)
 
-        # transformer block weights
-        self.blocks.apply(lambda m: _init_by_depth(m, self.hparams.num_layers))
-        self.head.apply(lambda m: _init_by_depth(m, 1 / 2))
-
-    def _slice(self, x):
-        start_indices = np.arange(
-            0,
-            x.shape[1] - self.hparams.overlap,
-            self.hparams.section_length - self.hparams.overlap,
-        )
-        sections = [
-            x[:, start : start + self.hparams.section_length].transpose(1, 2)
-            for start in start_indices
-        ]
-
-        # If the last section is not of length 'section_length', you can decide whether to keep or discard it
-        if sections[-1].shape[1] < self.hparams.section_length:
-            sections.pop(-1)  # Discard the last section
-
-        return torch.cat(sections, 1)
-
-    def _fnc(self, x):
-        std, mean = x.std(1, keepdim=True).clip_(0.2), x.mean(1, keepdim=True)
-        x = (x - mean) / std
-        x = self._slice(x)
-        x = F.pad(x, pad=(2, 0, 1, 0), mode="constant", value=0)
-        x[:, 0, 0] = (mean.squeeze() - 2) / 2
-        x[:, 0, 1] = (std.squeeze() - 2) / 8
-
-        return x
-
-    def forward(self, x: torch.Tensor, sliced: bool = False) -> torch.Tensor:
-        """Forward pass through the model. If you have already sliced the input, set sliced to True."""
-        # Pass through slicing function if not already sliced
-        if not sliced:
-            x = self._fnc(x)
+    def forward_without_preprocessing(self, x: Tensor):
+        """Forward pass through the model.
+        The training step performs masking before preprocessing,
+        thus samples should not be preprocessed again as in forward()"""
 
         t = x.shape[1]
         if t > self.hparams.max_len:
@@ -108,29 +75,19 @@ class SpecFormer(L.LightningModule):
             x = block(x)
         x = self.final_layernorm(x)
 
-        preds = self.head(x)
+        reconstructions = self.head(x)
 
-        return preds
+        return {"reconstructions": reconstructions, "embedding": x}
 
     def training_step(self, batch):
         # slice the input and copy
-        input = self._fnc(batch["spectrum"])
-        target = copy.deepcopy(input)
+        input = self.preprocess(batch["spectrum"])
+        target = torch.clone(input)
 
         # mask parts of the input
-        input = torch.stack(
-            [
-                mask_seq(
-                    el,
-                    num_chunks=self.hparams.num_chunks,
-                    chunk_width=self.hparams.chunk_width,
-                )
-                for el in input
-            ]
-        )
-
+        input = self.mask_sequence(input)
         # forward pass
-        output = self(input, sliced=True)
+        output = self.forward_without_preprocessing(input)["reconstructions"]
 
         # find the mask locations
         locs = (input != target).type_as(output)
@@ -140,23 +97,14 @@ class SpecFormer(L.LightningModule):
 
     def validation_step(self, batch):
         # slice the input and copy
-        input = self._fnc(batch["spectrum"])
-        target = copy.deepcopy(input)
+        input = self.preprocess(batch["spectrum"])
+        target = torch.clone(input)
 
         # mask parts of the input
-        input = torch.stack(
-            [
-                mask_seq(
-                    el,
-                    num_chunks=self.hparams.num_chunks,
-                    chunk_width=self.hparams.chunk_width,
-                )
-                for el in input
-            ]
-        )
+        input = self.mask_sequence(input)
 
         # forward pass
-        output = self(input, sliced=True)
+        output = self.forward_without_preprocessing(input)["reconstructions"]
 
         # find the mask locations
         locs = (input != target).type_as(output)
@@ -164,23 +112,64 @@ class SpecFormer(L.LightningModule):
         self.log("val_training_loss", loss, prog_bar=True)
         return loss
 
+    def mask_sequence(self, x: Tensor):
+        """Mask batched sequence"""
+        return torch.stack([self._mask_seq(el) for el in x])
 
-def mask_seq(seq: torch.Tensor, num_chunks: int, chunk_width: int) -> torch.Tensor:
-    """Randomly masks contiguous sections of the sequence, ensuring separation between chunks is at least chunk_width."""
-    len_ = seq.shape[0]
-    num_chunks = num_chunks
-    chunk_width = chunk_width
+    def preprocess(self, x):
+        std, mean = x.std(1, keepdim=True).clip_(0.2), x.mean(1, keepdim=True)
+        x = (x - mean) / std
+        x = self._slice(x)
+        x = F.pad(x, pad=(2, 0, 1, 0), mode="constant", value=0)
+        x[:, 0, 0] = (mean.squeeze() - 2) / 2
+        x[:, 0, 1] = (std.squeeze() - 2) / 8
 
-    # Ensure there's enough space for the chunks and separations
-    total_width_needed = num_chunks * chunk_width + (num_chunks - 1) * chunk_width
-    if total_width_needed > len_:
-        raise ValueError("Sequence is too short to mask")
+        return x
 
-    masked_seq = seq.clone()
+    def _reset_parameters_datapt(self):
+        # not scaling the initial embeddngs.
+        for emb in [self.data_embed, self.position_embed]:
+            std = 1 / math.sqrt(self.hparams.embed_dim)
+            nn.init.trunc_normal_(emb.weight, std=std, a=-3 * std, b=3 * std)
 
-    for i in range(num_chunks):
-        start = (i * len_) // num_chunks
-        loc = torch.randint(0, len_ // num_chunks - chunk_width, (1,)).item()
-        masked_seq[loc + start : loc + start + chunk_width] = 0
+        # transformer block weights
+        self.blocks.apply(lambda m: _init_by_depth(m, self.hparams.num_layers))
+        self.head.apply(lambda m: _init_by_depth(m, 1 / 2))
 
-    return masked_seq
+    def _slice(self, x):
+        start_indices = np.arange(
+            0,
+            x.shape[1] - self.hparams.slice_overlap,
+            self.hparams.slice_section_length - self.hparams.slice_overlap,
+        )
+        sections = [
+            x[:, start : start + self.hparams.slice_section_length].transpose(1, 2)
+            for start in start_indices
+        ]
+
+        # If the last section is not of length 'section_length', you can decide whether to keep or discard it
+        if sections[-1].shape[1] < self.hparams.slice_section_length:
+            sections.pop(-1)  # Discard the last section
+
+        return torch.cat(sections, 1)
+
+    def _mask_seq(self, seq: torch.Tensor) -> torch.Tensor:
+        """Randomly masks contiguous sections of an unbatched sequence,
+        ensuring separation between chunks is at least chunk_width."""
+        len_ = seq.shape[0]
+        num_chunks = self.hparams.mask_num_chunks
+        chunk_width = self.hparams.mask_chunk_width
+
+        # Ensure there's enough space for the chunks and separations
+        total_width_needed = num_chunks * chunk_width + (num_chunks - 1) * chunk_width
+        if total_width_needed > len_:
+            raise ValueError("Sequence is too short to mask")
+
+        masked_seq = seq.clone()
+
+        for i in range(num_chunks):
+            start = (i * len_) // num_chunks
+            loc = torch.randint(0, len_ // num_chunks - chunk_width, (1,)).item()
+            masked_seq[loc + start : loc + start + chunk_width] = 0
+
+        return masked_seq

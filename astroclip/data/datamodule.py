@@ -1,12 +1,12 @@
 from typing import Callable, Dict, List
 
+import datasets
 import lightning as L
 import torch
 from torch import Tensor
 from torch.utils.data.dataloader import default_collate
 from torchvision.transforms import CenterCrop
 
-import datasets
 from astroclip.astrodino.data.dataset import dr2_rgb
 
 

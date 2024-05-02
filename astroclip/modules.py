@@ -50,7 +50,6 @@ class CrossAttentionHead(nn.Module):
             query=self.query.repeat(batch_size, 1, 1),
             key=x,
             value=x,
-            need_weights=False,
             average_attn_weights=False,
         )[0]
         x = self.layernorm(self.dropout(attentions))
@@ -257,7 +256,6 @@ class LayerNorm(nn.Module):
         that is, the input has dimensions `[d1, ..., dk, shape[0], ..., shape[-1]]`
     :param eps: value added to the denominator for numerical stability
     :param bias: whether to include a bias term
-    :param device: device on which to create the parameters
     :param dtype: data type to use for the parameters
     """
 
@@ -269,7 +267,6 @@ class LayerNorm(nn.Module):
         shape: Union[int, Tuple[int, ...], torch.Size],
         eps: float = 1e-5,
         bias: bool = True,
-        device=None,
         dtype=None,
     ):
         super().__init__()
@@ -280,9 +277,8 @@ class LayerNorm(nn.Module):
         else:
             self.normalized_shape = tuple(shape)
 
-        kwargs = {"device": device, "dtype": dtype}
-        self.weight = nn.Parameter(torch.empty(shape, **kwargs))
-        self.bias = nn.Parameter(torch.empty(shape, **kwargs)) if bias else None
+        self.weight = nn.Parameter(torch.empty(shape))
+        self.bias = nn.Parameter(torch.empty(shape)) if bias else None
 
         self.reset_parameters()
 
