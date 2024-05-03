@@ -1,8 +1,7 @@
 #!/bin/bash -l
 
-#SBATCH -p gpupreempt
-#SBATCH --qos gpupreempt
-#SBATCH -t 128:00:00
+#SBATCH -p gpu
+#SBATCH -t 48:00:00
 #SBATCH -C a100,ib
 #SBATCH -N 5
 #SBATCH --gpus=20
@@ -13,6 +12,7 @@
 module purge
 module load python
 module load cuda
+module load gcc
 
 random_number=$(shuf -i 2000-65000 -n 1)
 run_name="astroclip_$random_number"
