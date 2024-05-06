@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from astropy.table import Table, join
+from datasets import load_dataset
 from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
 from sklearn.neighbors import KNeighborsRegressor
@@ -24,8 +25,6 @@ from utils.helpers import (
     zero_shot_train,
 )
 from utils.models import SimpleMLP
-
-from datasets import load_dataset
 
 sns.set()
 sns.set_style("ticks")

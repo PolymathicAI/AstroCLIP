@@ -9,14 +9,13 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.models as models
 from astropy.table import Table, join
+from datasets import load_dataset
 from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 from torchvision import transforms
-
-from datasets import load_dataset
 
 sns.set()
 sns.set_style("ticks")

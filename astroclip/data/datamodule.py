@@ -48,12 +48,12 @@ class AstroClipDataloader(L.LightningDataModule):
 
 class AstroClipCollator:
     def __init__(
-            self, 
-            center_crop: int = 144, 
-            bands: List[str] = ["g", "r", "z"], 
-            m: float = 0.03, 
-            Q: int = 20
-        ):
+        self,
+        center_crop: int = 144,
+        bands: List[str] = ["g", "r", "z"],
+        m: float = 0.03,
+        Q: int = 20,
+    ):
         self.center_crop = CenterCrop(center_crop)
         self.to_rgb = ToRGB(bands=bands, m=m, Q=Q)
 
@@ -61,9 +61,7 @@ class AstroClipCollator:
         # convert to rgb
         img_outs = []
         for img in images:
-            rgb_img = torch.tensor(
-                self.to_rgb(img)[None, :, :, :]
-            )
+            rgb_img = torch.tensor(self.to_rgb(img)[None, :, :, :])
             img_outs.append(rgb_img)
         images = torch.concatenate(img_outs)
 

@@ -1,20 +1,22 @@
+import argparse
 import os
 from typing import List
 
 import h5py
 import numpy as np
-import torch
-import argparse
 import requests
+import torch
 from astropy import units as u
-from torchvision.transforms import CenterCrop, Compose
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
+from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
 
 from astroclip.astrodino.data.augmentations import ToRGB
 
-gz_5_link = "https://zenodo.org/records/4573248/files/gz_decals_volunteers_5.csv?download=1"
+gz_5_link = (
+    "https://zenodo.org/records/4573248/files/gz_decals_volunteers_5.csv?download=1"
+)
 
 
 def _generate_catalog(files: List[str]) -> Table:
@@ -79,7 +81,7 @@ def _get_images(files: list[str], classifications: Table) -> Table:
                 index = entry["index"]
                 image = transform(torch.tensor(f["images"][index])).T
                 images[k] = np.array(image)
-    classifications['image'] = images
+    classifications["image"] = images
     return classifications
 
 
@@ -121,7 +123,7 @@ def main(root_dir: str, survey_path: str) -> None:
     Args:
         root_dir (str): Root directory of DECaLS images.
         survey_path (str): Path to Galaxy Zoo survey.
-        
+
     Returns:
         Table: Table of paired classifications.
     """
@@ -150,7 +152,7 @@ def main(root_dir: str, survey_path: str) -> None:
     # Save classifications
     save_path = survey_path.replace(".csv", ".h5")
     print(f"Saving paired classifications to {save_path}", flush=True)
-    classifications.write(save_path, overwrite=True, format='hdf5')
+    classifications.write(save_path, overwrite=True, format="hdf5")
 
 
 if __name__ == "__main__":
@@ -170,4 +172,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args.root_dir, args.survey_path)
-    

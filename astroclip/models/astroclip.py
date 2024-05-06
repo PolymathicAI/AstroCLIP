@@ -1,6 +1,7 @@
+import os
+import sys
 from typing import Dict, Tuple
 
-import os, sys
 import lightning as L
 import numpy as np
 import torch
@@ -198,7 +199,7 @@ class ImageHead(nn.Module):
             opts = []
 
         # Define DINO model
-        sys.stdout = open(os.devnull, 'w')  # Redirect stdout to null
+        sys.stdout = open(os.devnull, "w")  # Redirect stdout to null
         self.backbone, _ = setup_and_build_model(config())
         sys.stdout = sys.__stdout__  # Reset stdout
 

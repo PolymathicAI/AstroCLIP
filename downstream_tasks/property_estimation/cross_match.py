@@ -1,15 +1,13 @@
 import os
-
-import numpy as np
-from tqdm import tqdm
-from astropy.table import Table, join
-from datasets import load_from_disk
 from argparse import ArgumentParser
 
+import numpy as np
+from astropy.table import Table, join
+from datasets import load_from_disk
 from provabgs import models as Models
+from tqdm import tqdm
 
-
-provabgs_file = 'https://data.desi.lbl.gov/public/edr/vac/edr/provabgs/v1.0/BGS_ANY_full.provabgs.sv3.v0.hdf5'
+provabgs_file = "https://data.desi.lbl.gov/public/edr/vac/edr/provabgs/v1.0/BGS_ANY_full.provabgs.sv3.v0.hdf5"
 
 
 def _download_data(save_path: str):
@@ -19,7 +17,7 @@ def _download_data(save_path: str):
         os.makedirs(save_path)
 
     # Download the PROVABGS file
-    local_path = os.path.join(save_path, 'BGS_ANY_full.provabgs.sv3.v0.hdf5')
+    local_path = os.path.join(save_path, "BGS_ANY_full.provabgs.sv3.v0.hdf5")
     if not os.path.exists(local_path):
         print("Downloading PROVABGS data...")
         os.system(f"wget {provabgs_file} -O {local_path}")
@@ -33,18 +31,20 @@ def _get_best_fit(provabgs: Table):
     m_nmf = Models.NMF(burst=True, emulator=True)
 
     # Filter out galaxies with no best fit model
-    provabgs = provabgs[(provabgs['PROVABGS_LOGMSTAR_BF'] > 0) *
-                   (provabgs['MAG_G'] > 0) *
-                   (provabgs['MAG_R'] > 0) *
-                   (provabgs['MAG_Z'] > 0)]
+    provabgs = provabgs[
+        (provabgs["PROVABGS_LOGMSTAR_BF"] > 0)
+        * (provabgs["MAG_G"] > 0)
+        * (provabgs["MAG_R"] > 0)
+        * (provabgs["MAG_Z"] > 0)
+    ]
 
     # Get the thetas and redshifts for each galaxy
-    thetas = provabgs['PROVABGS_THETA_BF'][:, :12]
-    zreds = provabgs['Z_HP']
+    thetas = provabgs["PROVABGS_THETA_BF"][:, :12]
+    zreds = provabgs["Z_HP"]
 
-    Z_mw    = [] # Stellar Metallicitiy
-    tage_mw = [] # Age
-    avg_sfr = [] # Star-Forming Region
+    Z_mw = []  # Stellar Metallicitiy
+    tage_mw = []  # Age
+    avg_sfr = []  # Star-Forming Region
 
     print("Calculating best-fit properties using the PROVABGS model...")
     for i in tqdm(range(len(thetas))):
@@ -57,9 +57,9 @@ def _get_best_fit(provabgs: Table):
         avg_sfr.append(m_nmf.avgSFR(theta, zred=zred))
 
     # Add the properties to the table
-    provabgs['Z_MW'] = np.array(Z_mw)
-    provabgs['TAGE_MW'] = np.array(tage_mw)
-    provabgs['AVG_SFR'] = np.array(avg_sfr)
+    provabgs["Z_MW"] = np.array(Z_mw)
+    provabgs["TAGE_MW"] = np.array(tage_mw)
+    provabgs["AVG_SFR"] = np.array(avg_sfr)
     return provabgs
 
 
@@ -82,11 +82,13 @@ def main(
     provabgs = Table.read(provabgs_path)
 
     # Filter out galaxies with no best fit model
-    provabgs = provabgs[(provabgs['PROVABGS_LOGMSTAR_BF'] > 0) *
-                   (provabgs['MAG_G'] > 0) *
-                   (provabgs['MAG_R'] > 0) *
-                   (provabgs['MAG_Z'] > 0)]
-    
+    provabgs = provabgs[
+        (provabgs["PROVABGS_LOGMSTAR_BF"] > 0)
+        * (provabgs["MAG_G"] > 0)
+        * (provabgs["MAG_R"] > 0)
+        * (provabgs["MAG_Z"] > 0)
+    ]
+
     # Get the best fit model for each galaxy
     provabgs = _get_best_fit(provabgs)
 
@@ -114,10 +116,17 @@ def main(
 
     # Save the paired datasets
     if save_path is None:
-        train_provabgs.write(provabgs_path.replace("provabgs.hdf5", "provabgs_paired_train.hdf5"), overwrite=True)
-        test_provabgs.write(provabgs_path.replace("provabgs.hdf5", "provabgs_paired_test.hdf5"), overwrite=True)
+        train_provabgs.write(
+            provabgs_path.replace("provabgs.hdf5", "provabgs_paired_train.hdf5"),
+            overwrite=True,
+        )
+        test_provabgs.write(
+            provabgs_path.replace("provabgs.hdf5", "provabgs_paired_test.hdf5"),
+            overwrite=True,
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
         "--astroclip_path",
@@ -144,8 +153,3 @@ if __name__ == '__main__':
         provabgs_path=args.provabgs_path,
         save_path=args.save_path,
     )
-
-
-
-
-    

@@ -89,7 +89,7 @@ class LegacySurvey(VisionDataset):
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
-            
+
         return image, target
 
     def __len__(self) -> int:
@@ -163,7 +163,7 @@ class LegacySurveyNorth(VisionDataset):
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
-            
+
         return image, target
 
     def __len__(self) -> int:

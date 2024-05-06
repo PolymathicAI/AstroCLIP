@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset, WeightedRandomSampler
 
