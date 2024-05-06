@@ -1,17 +1,17 @@
 #!/bin/bash -l
 
 #SBATCH -p gpu
-##SBATCH -C "h100|a100"
+##SBATCH -C "h100"
 #SBATCH -J "astroclip-job"
-#SBATCH --nodes=2
-#SBATCH --ntasks-per-node=2
-#SBATCH --gpus-per-node=2
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-gpu=8
-#SBATCH --mem=20G
+#SBATCH --mem=200G
 #SBATCH --output=logs/astroclip-%j.log
 #SBATCH --time=15:00:00
 
-module load nccl
+module load ncll
 
 export num_workers=$(expr $SLURM_JOB_CPUS_PER_NODE - 1)
 export OMP_NUM_THREADS=${SLURM_CPUS_ON_NODE}
@@ -22,10 +22,11 @@ export NCCL_DEBUG=INFO
 export CUDA_LAUNCH_BLOCKING=1.
 
 # Load running environment
-source .local/env.sh
+source /mnt/home/lsarra/notebooks/AstroCLIP_v2/.local/env.sh
+source /mnt/home/lsarra/envs/astrodino/bin/activate
 
 srun $@ \
-    --data.num_workers=${num_workers} \
+    --data.num_workers=8 \
     --trainer.num_nodes=${SLURM_NNODES} \
     --trainer.devices=${SLURM_GPUS_PER_NODE} \
     --trainer.strategy='ddp_find_unused_parameters_true'
