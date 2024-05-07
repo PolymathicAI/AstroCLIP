@@ -158,6 +158,7 @@ def main(
     num_epochs: int = 100,
     learning_rate: float = 5e-4,
     properties: Optional = None,
+    device: str = "cuda",
 ):
     if properties is None:
         properties = GLOBAL_PROPERTIES
@@ -177,7 +178,7 @@ def main(
     elif modality == "spectrum":
         model = SpectrumEncoder(n_latent=len(properties))
     elif modality == "photometry":
-        model = MLP(n_in=3, n_out=len(properties), n_hidden=(16, 16, 16))
+        model = MLP(n_in=3, n_out=len(properties), n_hidden=(64, 64, 64))
 
     # Train the model
     best_model = train_model(
