@@ -80,22 +80,22 @@ def train_model(
     model: nn.Module,
     train_loader: torch.utils.data.DataLoader,
     val_loader: torch.utils.data.DataLoader,
-    scalers: Dict[str, Dict[str, float]],
+    scale: Dict[str, Dict[str, float]],
     properties: List[str],
     device="cuda",
     num_epochs=50,
-    learning_rate=1e-3,
+    lr=1e-3,
 ):
     """Helper function to train a model."""
     model.to(device)
 
     # Define the loss function and optimizer
     criterion = torch.nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=5e-4)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
 
     best_val_loss = float("inf")
 
-    epochs = tqdm.trange(num_epochs, desc="Training Model: ", leave=True)
+    epochs = trange(num_epochs, desc="Training Model: ", leave=True)
 
     # Training loop
     for epoch in epochs:
@@ -125,8 +125,8 @@ def train_model(
 
         val_r2s = {}
         for i, prop in enumerate(scale.keys()):
-            pred_i = (val_pred[:, i] * scalers[prop]["std"]) + scalers[prop]["mean"]
-            true_i = (val_true[:, i] * scalers[prop]["std"]) + scalers[prop]["mean"]
+            pred_i = (val_pred[:, i] * scale[prop]["std"]) + scale[prop]["mean"]
+            true_i = (val_true[:, i] * scale[prop]["std"]) + scale[prop]["mean"]
             val_r2s[prop] = r2_score(true_i, pred_i)
 
         if val_loss / len(val_loader) < best_val_loss:
@@ -166,7 +166,7 @@ def main(
     train_provabgs = Table.read(train_dataset)
     test_provabgs = Table.read(test_dataset)
 
-    # Get the data loaders & scalers
+    # Get the data loaders & normalization
     train_loader, val_loader, test_loader, scale = setup_supervised_data(
         train_provabgs, test_provabgs, modality, properties=properties
     )
@@ -187,7 +187,7 @@ def main(
         scale,
         properties,
         num_epochs=num_epochs,
-        learning_rate=learning_rate,
+        lr=learning_rate,
     )
     model.load_state_dict(best_model)
 
@@ -240,7 +240,7 @@ if __name__ == "__main__":
         "--num_epochs",
         type=int,
         help="Number of epochs to train the model",
-        default=100,
+        default=50,
     )
     parser.add_argument(
         "--learning_rate",
