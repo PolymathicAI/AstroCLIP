@@ -53,6 +53,6 @@ optimizer:
 lr_scheduler:
   class_path: astroclip.CosineAnnealingWithWarmupLR
   init_args:
-    T_max: 100
-    T_warmup: 20
+    T_max: 20_000
+    T_warmup: 2_000
     eta_min: ${eval:'${optimizer.init_args.lr}//500'}

@@ -4,12 +4,12 @@
 ##SBATCH -C "h100"
 #SBATCH -J "astroclip-job"
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-node=1
-#SBATCH --cpus-per-gpu=8
+#SBATCH --ntasks-per-node=4
+#SBATCH --gpus-per-node=4
+#SBATCH --cpus-per-gpu=1
 #SBATCH --mem=200G
 #SBATCH --output=logs/astroclip-%j.log
-#SBATCH --time=15:00:00
+#SBATCH --time=48:00:00
 
 module load ncll
 

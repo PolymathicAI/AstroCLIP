@@ -5,7 +5,10 @@ import numpy as np
 from astropy.table import Table, join
 from datasets import load_from_disk
 from provabgs import models as Models
+from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
+
+from astroclip.data.datamodule import AstroClipCollator, AstroClipDataloader
 
 provabgs_file = "https://data.desi.lbl.gov/public/edr/vac/edr/provabgs/v1.0/BGS_ANY_full.provabgs.sv3.v0.hdf5"
 
@@ -67,6 +70,8 @@ def main(
     astroclip_path: str,
     provabgs_path: str,
     save_path: str = None,
+    batch_size: int = 128,
+    num_workers: int = 20,
 ):
     """Cross-match the AstroCLIP and PROVABGS datasets."""
 
@@ -75,8 +80,45 @@ def main(
         _download_data(provabgs_path)
 
     # Load the AstroCLIP dataset
-    dataset = load_from_disk(astroclip_path)
-    dataset.set_format(type="torch", columns=["image", "redshift", "targetid"])
+    dataloader = AstroClipDataloader(
+        astroclip_path,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        collate_fn=AstroClipCollator(),
+        columns=["image", "targetid", "spectrum"],
+    )
+    dataloader.setup("fit")
+
+    # Process the images
+    train_images, train_spectra, train_targetids = [], [], []
+    for batch in tqdm(dataloader.train_dataloader(), desc="Processing train images"):
+        train_images.append(batch["image"])
+        train_spectra.append(batch["spectrum"])
+        train_targetids.append(batch["targetid"])
+
+    test_images, test_spectra, test_targetids = [], [], []
+    for batch in tqdm(dataloader.val_dataloader(), desc="Processing test images"):
+        test_images.append(batch["image"])
+        test_spectra.append(batch["spectrum"])
+        test_targetids.append(batch["targetid"])
+
+    print(f"Shape of images is {np.concatenate(train_images).shape[1:]}", flush=True)
+
+    # Create tables for the train and test datasets
+    train_table = Table(
+        {
+            "targetid": np.concatenate(train_targetids),
+            "image": np.concatenate(train_images),
+            "spectrum": np.concatenate(train_spectra),
+        }
+    )
+    test_table = Table(
+        {
+            "targetid": np.concatenate(test_targetids),
+            "image": np.concatenate(test_images),
+            "spectrum": np.concatenate(test_spectra),
+        }
+    )
 
     # Load the PROVABGS dataset
     provabgs = Table.read(provabgs_path)
@@ -92,18 +134,10 @@ def main(
     # Get the best fit model for each galaxy
     provabgs = _get_best_fit(provabgs)
 
-    # Create tables for the train and test datasets
-    train_table = Table(
-        {
-            "targetid": np.array(dataset["train"]["targetid"]),
-            "image": np.array(dataset["train"]["image"]),
-        }
-    )
-    test_table = Table(
-        {
-            "targetid": np.array(dataset["test"]["targetid"]),
-            "image": np.array(dataset["test"]["image"]),
-        }
+    # Scale the properties
+    provabgs["LOG_MSTAR_BF"] = np.log(provabgs["PROVABGS_LOGMSTAR_BF"].data)
+    provabgs["AVG_SFR"] = np.log(provabgs["AVG_SFR"].data) - np.log(
+        provabgs["Z_MW"].data
     )
 
     # Join the PROVABGS and AstroCLIP datasets
@@ -113,6 +147,8 @@ def main(
     test_provabgs = join(
         provabgs, test_table, keys_left="TARGETID", keys_right="targetid"
     )
+    print("Number of galaxies in train:", len(train_provabgs))
+    print("Number of galaxies in test:", len(test_provabgs))
 
     # Save the paired datasets
     if save_path is None:

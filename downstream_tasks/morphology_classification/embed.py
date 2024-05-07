@@ -3,13 +3,12 @@ import sys
 from argparse import ArgumentParser
 from typing import Dict
 
+import numpy as np
 import torch
 from astropy.table import Table
 from dinov2.eval.setup import setup_and_build_model
 from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
-
-from astroclip.astrodino.data.augmentations import ToRGB
 
 
 def setup_astrodino(
@@ -66,14 +65,15 @@ def get_embeddings(
     for key in model_embeddings.keys():
         model_embeddings[key] = np.concatenate(model_embeddings[key])
 
-    return embeddings
+    return model_embeddings
 
 
 def main(
     galaxy_zoo_file,
-    astrodino_output_dir="/mnt/ceph/users/polymathic/astroclip/outputs/astroclip_image/u6lwxdfu/",
-    astrodino_config_file="/astroclip/astrodino/config.yaml",
-    astrodino_pretrained_weights="/mnt/ceph/users/polymathic/astroclip/pretrained/astrodino_newest.ckpt",
+    batch_size: int = 128,
+    astrodino_output_dir: str = "/mnt/ceph/users/polymathic/astroclip/outputs/astroclip_image/u6lwxdfu/",
+    astrodino_config_file: str = "/astroclip/astrodino/config.yaml",
+    astrodino_pretrained_weights: str = "/mnt/ceph/users/polymathic/astroclip/pretrained/astrodino_newest.ckpt",
 ):
     # Set up models
     models = {
@@ -87,7 +87,7 @@ def main(
     images = galaxy_zoo["image"]
 
     # Get embeddings
-    embeddings = get_embeddings(models, images)
+    embeddings = get_embeddings(models, images, batch_size)
 
     # Remove images and replace with embeddings
     galaxy_zoo.remove_column("image")
@@ -105,6 +105,7 @@ if __name__ == "__main__":
         type=str,
         default="/mnt/ceph/users/polymathic/astroclip/datasets/galaxy_zoo/gz5_decals_crossmatched.h5",
     )
+    parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument(
         "--astrodino_output_dir",
         type=str,
@@ -122,6 +123,7 @@ if __name__ == "__main__":
 
     main(
         args.galaxy_zoo_file,
+        args.batch_size,
         args.astrodino_output_dir,
         args.astrodino_config_file,
         args.astrodino_pretrained_weights,

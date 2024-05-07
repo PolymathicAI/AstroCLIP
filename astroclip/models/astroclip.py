@@ -245,7 +245,7 @@ class ImageHead(nn.Module):
         x, attentions = self.cross_attention(embedding)
 
         # Pass through MLP and residual connection
-        x = x + self.mlp(x)
+        x = self.mlp(x)
 
         if return_weights:
             return x.squeeze(), attentions[1]
