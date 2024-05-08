@@ -10,12 +10,13 @@ from dinov2.eval.setup import setup_and_build_model
 from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
 
+from models import Moco_v2
+
 
 def setup_astrodino(
     astrodino_output_dir: str,
     astrodino_config_file: str,
     astrodino_pretrained_weights: str,
-    print_dino: bool = False,
 ) -> torch.nn.Module:
     """Set up AstroDINO model"""
 
@@ -26,12 +27,19 @@ def setup_astrodino(
         pretrained_weights = astrodino_pretrained_weights
         opts = []
 
-    if not print_dino:
-        sys.stdout = open(os.devnull, "w")  # Redirect stdout to null
+    sys.stdout = open(os.devnull, "w")  # Redirect stdout to null
     astrodino, _ = setup_and_build_model(config())
-    if not print_dino:
-        sys.stderr = sys.__stderr__  # Reset stderr
+    sys.stderr = sys.__stderr__  # Reset stderr
     return astrodino
+
+
+def setup_stein(
+    stein_pretrained_weights: str,
+) -> torch.nn.Module:
+    """Set up Stein model"""
+    return Moco_v2.load_from_checkpoint(
+        checkpoint_path=stein_pretrained_weights,
+    ).encoder_q
 
 
 def get_embeddings(
@@ -39,30 +47,38 @@ def get_embeddings(
 ) -> dict:
     """Get embeddings for images using models"""
     model_embeddings = {key: [] for key in models.keys()}
-    batch_images = []
+    batch = []
 
     for image in tqdm(images):
         # Load images, already preprocessed
-        batch_images.append(torch.tensor(image, dtype=torch.float32)[None, :, :, :])
+        batch.append(torch.tensor(image, dtype=torch.float32)[None, :, :, :])
 
         # Get embeddings for batch
-        if len(batch_images) == batch_size:
+        if len(batch) == batch_size:
             with torch.no_grad():
-                for key in models.keys():
-                    model_embeddings[key].append(
-                        models[key](torch.cat(batch_images).cuda()).cpu().numpy()
-                    )
-
-            batch_images = []
+                images = torch.cat(batch).cuda()
+                model_embeddings["astrodino"].append(
+                    models["astrodino"](images).cpu().numpy()
+                )
+                model_embeddings["stein"].append(
+                    models["stein"](CenterCrop(96)(images)).cpu().numpy()
+                )
+            batch = []
 
     # Get embeddings for last batch
-    if len(batch_images) > 0:
+    if len(batch) > 0:
         with torch.no_grad():
-            for key in models.keys():
-                model_embeddings[key].append(
-                    models[key](torch.cat(batch_images).cuda()).cpu().numpy()
-                )
-                model_embeddings[key] = np.concatenate(model_embeddings[key])
+            images = torch.cat(batch).cuda()
+            model_embeddings["astrodino"].append(
+                models["astrodino"](images).cpu().numpy()
+            )
+            model_embeddings["stein"].append(
+                models["stein"](CenterCrop(96)(images)).cpu().numpy()
+            )
+
+        # Concatenate embeddings
+        for key in model_embeddings.keys():
+            model_embeddings[key] = np.concatenate(model_embeddings[key])
 
     return model_embeddings
 
@@ -74,12 +90,14 @@ def main(
     astrodino_output_dir: str = "/mnt/ceph/users/polymathic/astroclip/outputs/astroclip_image/u6lwxdfu/",
     astrodino_config_file: str = "/astroclip/astrodino/config.yaml",
     astrodino_pretrained_weights: str = "/mnt/ceph/users/polymathic/astroclip/pretrained/astrodino_newest.ckpt",
+    stein_pretrained_weights: str = "/mnt/ceph/users/polymathic/astroclip/pretrained/stein.ckpt",
 ):
     # Set up models
     models = {
         "astrodino": setup_astrodino(
             astrodino_output_dir, astrodino_config_file, astrodino_pretrained_weights
-        )
+        ),
+        "stein": setup_stein(stein_pretrained_weights),
     }
 
     # Load data
