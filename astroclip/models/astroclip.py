@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Dict, Tuple
+from typing import Tuple
 
 import lightning as L
 import numpy as np
@@ -59,27 +59,17 @@ class AstroClipModel(L.LightningModule):
 
     def forward(
         self,
-        batch: Dict[str, Dict[str, torch.FloatTensor]],
-        return_weights: bool = False,
+        input: torch.Tensor,
+        input_type: str,
     ):
-        im, sp = batch["image"], batch["spectrum"]
+        if input_type == "image":
+            return self.image_encoder(input)
 
-        if not return_weights:
-            image_features = self.image_encoder(im)
-            spectrum_features = self.spectrum_encoder(sp)
-            return {"image": image_features, "spectrum": spectrum_features}
+        elif input_type == "spectrum":
+            return self.spectrum_encoder(input)
 
         else:
-            image_features, image_weights = self.image_encoder(im, return_weights=True)
-            spectrum_features, spectrum_weights = self.spectrum_encoder(
-                sp, return_weights=True
-            )
-            return {
-                "image": image_features,
-                "spectrum": spectrum_features,
-                "image_weights": image_weights,
-                "spectrum_weights": spectrum_weights,
-            }
+            raise ValueError("Input type must be either 'image' or 'spectrum'")
 
     def training_step(self, batch, batch_idx):
         im, sp = batch["image"], batch["spectrum"]
@@ -192,6 +182,7 @@ class ImageHead(nn.Module):
         """
         super().__init__()
 
+        # Define DINO config
         class config:
             output_dir = save_directory
             config_file = config
@@ -202,15 +193,6 @@ class ImageHead(nn.Module):
         sys.stdout = open(os.devnull, "w")  # Redirect stdout to null
         self.backbone, _ = setup_and_build_model(config())
         sys.stdout = sys.__stdout__  # Reset stdout
-
-        # Forward the image backbone of DINO model
-        def forward_image_backbone(self, x: torch.Tensor) -> torch.Tensor:
-            x = self.patch_embed(x)
-            for blk in self.blocks:
-                x = blk(x)
-            return self.norm(x)
-
-        self.backbone.forward = forward_image_backbone.__get__(self.backbone)
 
         # Freeze backbone if necessary
         self.freeze_backbone = freeze_backbone
@@ -235,11 +217,11 @@ class ImageHead(nn.Module):
 
     def forward(self, x: torch.tensor, return_weights: bool = False):
         # Pass through the backbone
-        if self.freeze_backbone:
-            with torch.no_grad():
-                embedding = self.backbone(x)
-        else:
-            embedding = self.backbone(x)
+        with torch.set_grad_enabled(not self.freeze_backbone):
+            x = self.backbone.patch_embed(x)
+            for blk in self.backbone.blocks:
+                x = blk(x)
+            embedding = self.backbone.norm(x)
 
         # Pass through cross-attention
         x, attentions = self.cross_attention(embedding)
@@ -305,10 +287,7 @@ class SpectrumHead(nn.Module):
         self, x: torch.tensor, y: torch.tensor = None, return_weights: bool = False
     ):
         # Embed the spectrum using the pretrained model
-        if self.freeze_backbone:
-            with torch.no_grad():
-                embedding = self.backbone(x)["embedding"]
-        else:
+        with torch.set_grad_enabled(not self.freeze_backbone):
             embedding = self.backbone(x)["embedding"]
 
         # Pass through cross-attention

@@ -37,7 +37,7 @@ def few_shot(
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
             optimizer.zero_grad()
-            outputs = model(inputs.cuda())
+            outputs = model(inputs.cuda()).squeeze()
             loss = criterion(outputs, labels.cuda())
             loss.backward()
             optimizer.step()
