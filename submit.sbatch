@@ -6,12 +6,13 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --gpus-per-node=4
-#SBATCH --cpus-per-gpu=1
+#SBATCH --cpus-per-gpu=2
 #SBATCH --mem=200G
 #SBATCH --output=logs/astroclip-%j.log
 #SBATCH --time=48:00:00
 
-module load ncll
+module load gcc
+module load nccl
 
 export num_workers=$(expr $SLURM_JOB_CPUS_PER_NODE - 1)
 export OMP_NUM_THREADS=${SLURM_CPUS_ON_NODE}
@@ -22,8 +23,7 @@ export NCCL_DEBUG=INFO
 export CUDA_LAUNCH_BLOCKING=1.
 
 # Load running environment
-source /mnt/home/lsarra/notebooks/AstroCLIP_v2/.local/env.sh
-source /mnt/home/lsarra/envs/astrodino/bin/activate
+source /mnt/home/lparker/python_envs/toto/bin/activate
 
 srun $@ \
     --data.num_workers=8 \
