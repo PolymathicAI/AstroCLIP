@@ -89,7 +89,7 @@ teacher:
 optim:
   epochs: 200
   weight_decay: 0.001
-  weight_decay_end: 0.001
+  weight_decay_end: 0.01
   base_lr: 2.0e-4  # learning rate for a batch size of 1024
   lr: 0.  # will be set after applying scaling rule
   warmup_epochs: 32
