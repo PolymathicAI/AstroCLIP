@@ -135,10 +135,8 @@ def main(
     provabgs = _get_best_fit(provabgs)
 
     # Scale the properties
-    provabgs["LOG_MSTAR_BF"] = np.log(provabgs["PROVABGS_LOGMSTAR_BF"].data)
-    provabgs["AVG_SFR"] = np.log(provabgs["AVG_SFR"].data) - np.log(
-        provabgs["Z_MW"].data
-    )
+    provabgs["LOG_MSTAR"] = np.log(provabgs["PROVABGS_LOGMSTAR_BF"].data)
+    provabgs["sSFR"] = np.log(provabgs["AVG_SFR"].data) - np.log(provabgs["Z_MW"].data)
 
     # Join the PROVABGS and AstroCLIP datasets
     train_provabgs = join(

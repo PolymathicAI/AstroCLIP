@@ -20,6 +20,7 @@ def few_shot(
     y_train: ndarray,
     X_test: ndarray,
     max_epochs: int = 10,
+    hidden_dims: list[int] = [64, 64],
     lr: float = 1e-3,
 ) -> ndarray:
     """Train a few-shot model using a simple neural network"""
@@ -29,6 +30,14 @@ def few_shot(
     )
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 
+    num_features = y_train.shape[1] if len(y_train.shape) > 1 else 1
+    model = MLP(
+        n_in=X_train.shape[1],
+        n_out=num_features,
+        n_hidden=hidden_dims,
+        act=[nn.ReLU()] * (len(hidden_dims) + 1),
+    )
+
     # Set up the model
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -36,7 +45,7 @@ def few_shot(
     # Train the model
     model.cuda()
     model.train()
-    for epoch in tqdm(range(max_epochs), desc="Training few-shot model"):
+    for epoch in range(max_epochs):
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
@@ -58,7 +67,6 @@ def zero_shot(
     X_train: ndarray, y_train: ndarray, X_test: ndarray, n_neighbors: int = 64
 ) -> ndarray:
     """Train a zero-shot model using KNN"""
-    print("Training zero-shot model")
     neigh = KNeighborsRegressor(weights="distance", n_neighbors=64)
     neigh.fit(X_train, y_train)
     preds = neigh.predict(X_test)
@@ -68,13 +76,13 @@ def zero_shot(
 class ResNet18(nn.Module):
     """Modfied ResNet18."""
 
-    def __init__(self, num_classes=1):
+    def __init__(self, n_out=1):
         super(ResNet18, self).__init__()
         self.resnet = models.resnet18(weights=None)
         self.resnet.conv1 = nn.Conv2d(
             3, 64, kernel_size=7, stride=2, padding=3, bias=False
         )
-        self.resnet.fc = nn.Linear(512, num_classes)
+        self.resnet.fc = nn.Linear(512, n_out)
 
     def forward(self, x):
         return self.resnet(x)
@@ -92,11 +100,11 @@ class MLP(nn.Sequential):
 
         layer = []
         n_ = [n_in, *n_hidden, n_out]
-        for i in range(len(n_) - 1):
+        for i in range(len(n_) - 2):
             layer.append(nn.Linear(n_[i], n_[i + 1]))
             layer.append(act[i])
             layer.append(nn.Dropout(p=dropout))
-
+        layer.append(nn.Linear(n_[-2], n_[-1]))
         super(MLP, self).__init__(*layer)
 
 

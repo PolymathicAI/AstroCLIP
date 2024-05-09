@@ -3,7 +3,7 @@ trainer:
   default_root_dir: "{ASTROCLIP_ROOT}/outputs"
   enable_checkpointing: true
   gradient_clip_val: 1.
-  max_epochs: 50
+  max_epochs: 100
   precision: null
   callbacks:
     - class_path: LearningRateMonitor
@@ -12,6 +12,9 @@ trainer:
     - class_path: ModelCheckpoint
       init_args:
         save_last: link
+        save_top_k: 2
+        every_n_epochs: 1
+        monitor: "val_loss_nologit"
   logger:
     class_path: CustomWandbLogger
     init_args:
@@ -39,7 +42,7 @@ data:
     columns:
       - image
       - spectrum
-    batch_size: 128
+    batch_size: 256
     num_workers: 8
     collate_fn:
       class_path: astroclip.data.AstroClipCollator
@@ -49,10 +52,10 @@ optimizer:
   class_path: torch.optim.adamw.AdamW
   init_args:
     lr: 1e-4
-    weight_decay: 0.01
+    weight_decay: 0.05
 lr_scheduler:
   class_path: astroclip.CosineAnnealingWithWarmupLR
   init_args:
     T_max: 10_000
-    T_warmup: 1_000
+    T_warmup: 0
     eta_min: ${eval:'${optimizer.init_args.lr}//500'}

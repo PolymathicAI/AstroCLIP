@@ -9,11 +9,18 @@ from astropy.table import Table
 from sklearn.metrics import r2_score
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset, random_split
+from torchvision.transforms import (
+    Compose,
+    GaussianBlur,
+    RandomHorizontalFlip,
+    RandomVerticalFlip,
+)
 from tqdm import trange
 
 from models import MLP, ResNet18, SpectrumEncoder
 
-GLOBAL_PROPERTIES = ["Z_HP", "PROVABGS_LOGMSTAR_BF", "Z_MW", "TAGE_MW", "AVG_SFR"]
+# Define transforms for image model
+transforms = Compose([RandomHorizontalFlip(), RandomVerticalFlip(), GaussianBlur(3)])
 
 
 def setup_supervised_data(
@@ -80,6 +87,7 @@ def train_model(
     model: nn.Module,
     train_loader: torch.utils.data.DataLoader,
     val_loader: torch.utils.data.DataLoader,
+    modality: str,
     scale: Dict[str, Dict[str, float]],
     properties: List[str],
     device="cuda",
@@ -102,8 +110,10 @@ def train_model(
         train_loss = 0
         model.train()
         for X_batch, y_batch in train_loader:
+            if modality == "image":
+                X_batch = transforms(X_batch)
             y_pred = model(X_batch.to(device)).squeeze()
-            loss = criterion(y_pred, y_batch.to(device))
+            loss = criterion(y_pred, y_batch.to(device).squeeze())
             train_loss += loss.item()
 
             # Backward pass and optimize
@@ -115,19 +125,13 @@ def train_model(
         with torch.no_grad():
             for X_batch, y_batch in val_loader:
                 y_pred = model(X_batch.to(device)).squeeze().detach().cpu()
-                loss = criterion(y_pred, y_batch)
+                loss = criterion(y_pred, y_batch.squeeze())
                 val_loss += loss.item()
                 val_pred.append(y_pred)
                 val_true.append(y_batch)
 
         val_pred = torch.cat(val_pred).numpy()
         val_true = torch.cat(val_true).numpy()
-
-        val_r2s = {}
-        for i, prop in enumerate(scale.keys()):
-            pred_i = (val_pred[:, i] * scale[prop]["std"]) + scale[prop]["mean"]
-            true_i = (val_true[:, i] * scale[prop]["std"]) + scale[prop]["mean"]
-            val_r2s[prop] = r2_score(true_i, pred_i)
 
         if val_loss / len(val_loader) < best_val_loss:
             best_model = model.state_dict()
@@ -138,11 +142,10 @@ def train_model(
             break
 
         epochs.set_description(
-            "epoch: {}, train loss: {:.4f}, val loss: {:.4f}, z_hp: {:.4f}".format(
+            "epoch: {}, train loss: {:.4f}, val loss: {:.4f}".format(
                 epoch + 1,
                 train_loss / len(train_loader),
                 val_loss / len(val_loader),
-                val_r2s["Z_HP"],
             )
         )
         epochs.update(1)
@@ -160,8 +163,14 @@ def main(
     properties: Optional = None,
     device: str = "cuda",
 ):
-    if properties is None:
-        properties = GLOBAL_PROPERTIES
+    if properties is "redshift":
+        properties = ["Z_HP"]
+    elif properties is "global_properties":
+        properties = ["LOG_MSTAR", "Z_MW", "TAGE_MW", "sSFR"]
+    else:
+        raise ValueError(
+            "Invalid properties, choose from redshift or global_properties."
+        )
 
     # Load the data
     train_provabgs = Table.read(train_dataset)
@@ -174,17 +183,20 @@ def main(
 
     # Initialize the model
     if modality == "image":
-        model = ResNet18(num_classes=len(properties))
+        model = ResNet18(n_out=len(properties))
     elif modality == "spectrum":
         model = SpectrumEncoder(n_latent=len(properties))
     elif modality == "photometry":
-        model = MLP(n_in=3, n_out=len(properties), n_hidden=(64, 64, 64))
+        model = MLP(
+            n_in=3, n_out=len(properties), n_hidden=[64, 64], act=[nn.ReLU()] * 3
+        )
 
     # Train the model
     best_model = train_model(
         model,
         train_loader,
         val_loader,
+        modality,
         scale,
         properties,
         num_epochs=num_epochs,
@@ -202,11 +214,20 @@ def main(
 
     pred_dict = {}
     for i, p in enumerate(scale.keys()):
-        pred_dict[p] = (test_pred[:, i] * scale[p]["std"]) + scale[p]["mean"]
+        if len(test_pred.shape) > 1:
+            pred_dict[p] = (test_pred[:, i] * scale[p]["std"]) + scale[p]["mean"]
+        else:
+            pred_dict[p] = (test_pred * scale[p]["std"]) + scale[p]["mean"]
         print(f"{p} R^2: {r2_score(test_provabgs[p], pred_dict[p])}")
 
     # Save the model and the predictions
-    save_dir = os.path.join(save_dir, modality)
+    if properties == GLOBAL_PROPERTIES:
+        property_list = "all"
+    else:
+        property_list = "_".join(properties)
+    save_dir = os.path.join(save_dir, modality, property_list)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     torch.save(model, os.path.join(save_dir, "model.pt"))
     torch.save(pred_dict, os.path.join(save_dir, "test_pred.pt"))
 
@@ -250,7 +271,10 @@ if __name__ == "__main__":
         default=5e-4,
     )
     parser.add_argument(
-        "--properties", type=str, nargs="+", help="Properties to predict", default=None
+        "--properties",
+        type=str,
+        help="Properties to predict (redshift or global_properties)",
+        default=global_properties,
     )
     args = parser.parse_args()
 

@@ -10,7 +10,17 @@ from dinov2.eval.setup import setup_and_build_model
 from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
 
+from astroclip.models import AstroClipModel
 from models import Moco_v2
+
+
+def setup_astroclip(
+    astroclip_pretrained_weights: str,
+) -> torch.nn.Module:
+    """Set up AstroClip model"""
+    return AstroClipModel.load_from_checkpoint(
+        checkpoint_path=astroclip_pretrained_weights,
+    )
 
 
 def setup_astrodino(
@@ -63,6 +73,9 @@ def get_embeddings(
                 model_embeddings["stein"].append(
                     models["stein"](CenterCrop(96)(images)).cpu().numpy()
                 )
+                model_embeddings["astroclip"].append(
+                    models["astroclip"](images, input_type="image").cpu().numpy()
+                )
             batch = []
 
     # Get embeddings for last batch
@@ -75,6 +88,9 @@ def get_embeddings(
             model_embeddings["stein"].append(
                 models["stein"](CenterCrop(96)(images)).cpu().numpy()
             )
+            model_embeddings["astroclip"].append(
+                models["astroclip"](images, input_type="image").cpu().numpy()
+            )
 
         # Concatenate embeddings
         for key in model_embeddings.keys():
@@ -86,11 +102,12 @@ def get_embeddings(
 def main(
     provabgs_file_train: str,
     provabgs_file_test: str,
+    astrodino_output_dir: str,
+    astrodino_config_file: str,
+    astrodino_pretrained_weights: str,
+    stein_pretrained_weights: str,
+    astroclip_pretrained_weights: str,
     batch_size: int = 128,
-    astrodino_output_dir: str = "/mnt/ceph/users/polymathic/astroclip/outputs/astroclip_image/u6lwxdfu/",
-    astrodino_config_file: str = "/astroclip/astrodino/config.yaml",
-    astrodino_pretrained_weights: str = "/mnt/ceph/users/polymathic/astroclip/pretrained/astrodino_newest.ckpt",
-    stein_pretrained_weights: str = "/mnt/ceph/users/polymathic/astroclip/pretrained/stein.ckpt",
 ):
     # Set up models
     models = {
@@ -98,6 +115,7 @@ def main(
             astrodino_output_dir, astrodino_config_file, astrodino_pretrained_weights
         ),
         "stein": setup_stein(stein_pretrained_weights),
+        "astroclip": setup_astroclip(astroclip_pretrained_weights),
     }
 
     # Load data
@@ -145,13 +163,25 @@ if __name__ == "__main__":
         type=str,
         default="/mnt/ceph/users/polymathic/astroclip/pretrained/astrodino_newest.ckpt",
     )
+    parser.add_argument(
+        "--stein_pretrained_weights",
+        type=str,
+        default="/mnt/ceph/users/polymathic/astroclip/pretrained/stein.ckpt",
+    )
+    parser.add_argument(
+        "--astroclip_pretrained_weights",
+        type=str,
+        default="/mnt/ceph/users/polymathic/astroclip/pretrained/astroclip.ckpt",
+    )
     args = parser.parse_args()
 
     main(
         args.provabgs_file_train,
         args.provabgs_file_test,
-        args.batch_size,
         args.astrodino_output_dir,
         args.astrodino_config_file,
         args.astrodino_pretrained_weights,
+        args.stein_pretrained_weights,
+        args.astroclip_pretrained_weights,
+        args.batch_size,
     )
