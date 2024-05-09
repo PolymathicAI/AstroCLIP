@@ -133,14 +133,12 @@ def train_model(
         val_pred = torch.cat(val_pred).numpy()
         val_true = torch.cat(val_true).numpy()
 
+        # Save the best model
         if val_loss / len(val_loader) < best_val_loss:
             best_model = model.state_dict()
             best_val_loss = val_loss / len(val_loader)
 
-        # Early stopping
-        if epoch > 10 and val_loss / len(val_loader) > 1.5 * best_val_loss:
-            break
-
+        # Set epoch description
         epochs.set_description(
             "epoch: {}, train loss: {:.4f}, val loss: {:.4f}".format(
                 epoch + 1,
@@ -153,6 +151,26 @@ def train_model(
     return best_model
 
 
+def get_predictions(model, test_loader, test_provabgs, scale, device="cuda"):
+    """Use model to get predictions"""
+    test_pred = []
+    with torch.no_grad():
+        for X_batch in test_loader:
+            y_pred = model(X_batch.to(device)).squeeze().detach().cpu()
+            test_pred.append(y_pred)
+    test_pred = torch.cat(test_pred).numpy()
+
+    pred_dict = {}
+    for i, p in enumerate(scale.keys()):
+        if len(test_pred.shape) > 1:
+            pred_dict[p] = (test_pred[:, i] * scale[p]["std"]) + scale[p]["mean"]
+        else:
+            pred_dict[p] = (test_pred * scale[p]["std"]) + scale[p]["mean"]
+        print(f"{p} R^2: {r2_score(test_provabgs[p], pred_dict[p])}")
+
+    return pred_dict
+
+
 def main(
     train_dataset: str,
     test_dataset: str,
@@ -160,12 +178,12 @@ def main(
     modality: str,
     num_epochs: int = 100,
     learning_rate: float = 5e-4,
-    properties: Optional = None,
+    property_list: Optional = None,
     device: str = "cuda",
 ):
-    if properties is "redshift":
+    if property_list == "redshift":
         properties = ["Z_HP"]
-    elif properties is "global_properties":
+    elif property_list == "global_properties":
         properties = ["LOG_MSTAR", "Z_MW", "TAGE_MW", "sSFR"]
     else:
         raise ValueError(
@@ -205,26 +223,9 @@ def main(
     model.load_state_dict(best_model)
 
     # Get the predictions
-    test_pred = []
-    with torch.no_grad():
-        for X_batch in test_loader:
-            y_pred = model(X_batch.to(device)).squeeze().detach().cpu()
-            test_pred.append(y_pred)
-    test_pred = torch.cat(test_pred).numpy()
-
-    pred_dict = {}
-    for i, p in enumerate(scale.keys()):
-        if len(test_pred.shape) > 1:
-            pred_dict[p] = (test_pred[:, i] * scale[p]["std"]) + scale[p]["mean"]
-        else:
-            pred_dict[p] = (test_pred * scale[p]["std"]) + scale[p]["mean"]
-        print(f"{p} R^2: {r2_score(test_provabgs[p], pred_dict[p])}")
+    pred_dict = get_predictions(model, test_loader, test_provabgs, scale, device=device)
 
     # Save the model and the predictions
-    if properties == GLOBAL_PROPERTIES:
-        property_list = "all"
-    else:
-        property_list = "_".join(properties)
     save_dir = os.path.join(save_dir, modality, property_list)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -274,7 +275,7 @@ if __name__ == "__main__":
         "--properties",
         type=str,
         help="Properties to predict (redshift or global_properties)",
-        default=global_properties,
+        default="global_properties",
     )
     args = parser.parse_args()
 

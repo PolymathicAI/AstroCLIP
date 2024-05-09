@@ -10,7 +10,7 @@ from dinov2.eval.setup import setup_and_build_model
 from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
 
-from astroclip.models import AstroClipModel
+from astroclip.models import AstroClipModel, SpecFormer
 from models import Moco_v2
 
 
@@ -25,8 +25,8 @@ def setup_astroclip(
 
 def setup_astrodino(
     astrodino_output_dir: str,
-    astrodino_config_file: str,
     astrodino_pretrained_weights: str,
+    astrodino_config_file: str = "./astroclip/astrodino/config.yaml",
 ) -> torch.nn.Module:
     """Set up AstroDINO model"""
 
@@ -43,53 +43,89 @@ def setup_astrodino(
     return astrodino
 
 
+def setup_specformer(
+    specformer_pretrained_weights: str,
+) -> torch.nn.Module:
+    checkpoint = torch.load(specformer_pretrained_weights)
+    model = SpecFormer(**checkpoint["hyper_parameters"]).cuda()
+    return model
+
+
 def setup_stein(
     stein_pretrained_weights: str,
 ) -> torch.nn.Module:
-    """Set up Stein model"""
+    """Set up Stein, et al. model"""
     return Moco_v2.load_from_checkpoint(
         checkpoint_path=stein_pretrained_weights,
     ).encoder_q
 
 
 def get_embeddings(
-    models: Dict[str, torch.nn.Module], images: torch.Tensor, batch_size: int = 64
+    models: Dict[str, torch.nn.Module],
+    images: torch.Tensor,
+    spectra: torch.Tensor,
+    batch_size: int = 64,
 ) -> dict:
     """Get embeddings for images using models"""
     model_embeddings = {key: [] for key in models.keys()}
-    batch = []
+    im_batch, sp_batch = [], []
 
-    for image in tqdm(images):
+    for image, spectrum in tqdm(zip(images, spectra)):
         # Load images, already preprocessed
-        batch.append(torch.tensor(image, dtype=torch.float32)[None, :, :, :])
+        im_batch.append(torch.tensor(image, dtype=torch.float32)[None, :, :, :])
+        sp_batch.append(torch.tensor(spectrum, dtype=torch.float32)[None, :, :])
 
         # Get embeddings for batch
-        if len(batch) == batch_size:
+        if len(im_batch) == batch_size:
             with torch.no_grad():
-                images = torch.cat(batch).cuda()
+                # Embed spectra
+                spectra = torch.cat(sp_batch).cuda()
+                model_embeddings["astroclip_spectrum"].append(
+                    models["astroclip_spectrum"](spectra, input_type="spectrum")
+                    .cpu()
+                    .numpy()
+                )
+                model_embeddings["specformer"].append(
+                    models["specformer"](spectra)["embedding"].cpu().numpy()
+                )
+
+                # Embed images
+                images = torch.cat(im_batch).cuda()
                 model_embeddings["astrodino"].append(
                     models["astrodino"](images).cpu().numpy()
                 )
                 model_embeddings["stein"].append(
                     models["stein"](CenterCrop(96)(images)).cpu().numpy()
                 )
-                model_embeddings["astroclip"].append(
-                    models["astroclip"](images, input_type="image").cpu().numpy()
+                model_embeddings["astroclip_image"].append(
+                    models["astroclip_image"](images, input_type="image").cpu().numpy()
                 )
-            batch = []
+            im_batch, sp_batch = [], []
 
     # Get embeddings for last batch
-    if len(batch) > 0:
+    if len(im_batch) > 0:
         with torch.no_grad():
-            images = torch.cat(batch).cuda()
+            # Embed spectra
+            spectra = torch.cat(sp_batch).cuda()
+            model_embeddings["astroclip_spectrum"].append(
+                models["astroclip_spectrum"](spectra, input_type="spectrum")
+                .cpu()
+                .numpy()
+            )
+            model_embeddings["specformer"].append(
+                models["specformer"](spectra).cpu().numpy()
+            )
+
+            # Embed images
+            images = torch.cat(im_batch).cuda()
             model_embeddings["astrodino"].append(
                 models["astrodino"](images).cpu().numpy()
             )
             model_embeddings["stein"].append(
                 models["stein"](CenterCrop(96)(images)).cpu().numpy()
             )
-            model_embeddings["astroclip"].append(
-                models["astroclip"](images, input_type="image").cpu().numpy()
+            model_embeddings["astroclip_image"].append(
+                models["astroclip_image"](images, input_type="image").cpu().numpy()
             )
 
         # Concatenate embeddings
@@ -102,30 +138,35 @@ def get_embeddings(
 def main(
     provabgs_file_train: str,
     provabgs_file_test: str,
-    astrodino_output_dir: str,
-    astrodino_config_file: str,
-    astrodino_pretrained_weights: str,
-    stein_pretrained_weights: str,
-    astroclip_pretrained_weights: str,
+    pretrained_dir: str,
     batch_size: int = 128,
 ):
+    # Get directories
+    astrodino_pretrained_weights = os.path.join(pretrained_dir, "astrodino.ckpt")
+    astrodino_output_dir = os.path.join(pretrained_dir, "astrodino_output_dir")
+    stein_pretrained_weights = os.path.join(pretrained_dir, "stein.ckpt")
+    astroclip_pretrained_weights = os.path.join(pretrained_dir, "astroclip.ckpt")
+    specformer_pretrained_weights = os.path.join(pretrained_dir, "specformer.ckpt")
+
     # Set up models
     models = {
         "astrodino": setup_astrodino(
-            astrodino_output_dir, astrodino_config_file, astrodino_pretrained_weights
+            astrodino_output_dir, astrodino_pretrained_weights
         ),
         "stein": setup_stein(stein_pretrained_weights),
-        "astroclip": setup_astroclip(astroclip_pretrained_weights),
+        "astroclip_image": setup_astroclip(astroclip_pretrained_weights),
+        "astroclip_spectrum": setup_astroclip(astroclip_pretrained_weights),
+        "specformer": setup_specformer(specformer_pretrained_weights),
     }
 
     # Load data
     files = [provabgs_file_train, provabgs_file_test]
     for f in files:
         provabgs = Table.read(f)
-        images = provabgs["image"]
+        images, spectra = provabgs["image"], provabgs["spectrum"]
 
         # Get embeddings
-        embeddings = get_embeddings(models, images, batch_size)
+        embeddings = get_embeddings(models, images, spectra, batch_size)
 
         # Remove images and replace with embeddings
         provabgs.remove_column("image")
@@ -149,39 +190,17 @@ if __name__ == "__main__":
         type=str,
         default="/mnt/ceph/users/polymathic/astroclip/datasets/provabgs/provabgs_paired_test.hdf5",
     )
+    parser.add_argument(
+        "--pretrained_dir",
+        type=str,
+        default="/mnt/ceph/users/polymathic/astroclip/pretrained/",
+    )
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument(
-        "--astrodino_output_dir",
-        type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/outputs/astroclip_image/u6lwxdfu/",
-    )
-    parser.add_argument(
-        "--astrodino_config_file", type=str, default="./astroclip/astrodino/config.yaml"
-    )
-    parser.add_argument(
-        "--astrodino_pretrained_weights",
-        type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/pretrained/astrodino_newest.ckpt",
-    )
-    parser.add_argument(
-        "--stein_pretrained_weights",
-        type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/pretrained/stein.ckpt",
-    )
-    parser.add_argument(
-        "--astroclip_pretrained_weights",
-        type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/pretrained/astroclip.ckpt",
-    )
     args = parser.parse_args()
 
     main(
         args.provabgs_file_train,
         args.provabgs_file_test,
-        args.astrodino_output_dir,
-        args.astrodino_config_file,
-        args.astrodino_pretrained_weights,
-        args.stein_pretrained_weights,
-        args.astroclip_pretrained_weights,
+        args.pretrained_dir,
         args.batch_size,
     )

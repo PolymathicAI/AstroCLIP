@@ -111,10 +111,10 @@ def main(
 
     # Get predictions from supervised models
     resnet_preds = torch.load(
-        os.path.join(supervised_model_path, "image/Z_HP/test_pred.pt")
+        os.path.join(supervised_model_path, "image/redshift/test_pred.pt")
     )["Z_HP"]
     photometry_preds = torch.load(
-        os.path.join(supervised_model_path, "photometry/Z_HP/test_pred.pt")
+        os.path.join(supervised_model_path, "photometry/redshift/test_pred.pt")
     )["Z_HP"]
 
     # Add predictions to dictionary
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--models",
         type=list,
-        default=["astrodino", "stein"],
+        default=["astroclip", "astrodino", "stein"],
         help="Models to use for redshift estimation",
     )
     args = parser.parse_args()
