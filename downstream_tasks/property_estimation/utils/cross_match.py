@@ -132,11 +132,13 @@ def main(
     ]
 
     # Get the best fit model for each galaxy
+    print("Getting property best fit with PROVABGS SED model")
     provabgs = _get_best_fit(provabgs)
 
     # Scale the properties
-    provabgs["LOG_MSTAR"] = np.log(provabgs["PROVABGS_LOGMSTAR_BF"].data)
+    provabgs["LOG_MSTAR"] = provabgs["PROVABGS_LOGMSTAR_BF"].data
     provabgs["sSFR"] = np.log(provabgs["AVG_SFR"].data) - np.log(provabgs["Z_MW"].data)
+    provabgs["Z_MW"] = np.log(provabgs["Z_MW"].data)
 
     # Join the PROVABGS and AstroCLIP datasets
     train_provabgs = join(

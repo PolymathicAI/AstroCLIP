@@ -29,7 +29,7 @@ model:
       class_path: astroclip.models.astroclip.ImageHead
       init_args:
         config: "astroclip/astrodino/config.yaml"
-        model_weights: "{ASTROCLIP_ROOT}/pretrained/astrodino_newest.ckpt"
+        model_weights: "{ASTROCLIP_ROOT}/pretrained/astrodino.ckpt"
         save_directory: "{ASTROCLIP_ROOT}/outputs/astrodino"
     spectrum_encoder:
       class_path: astroclip.models.astroclip.SpectrumHead
@@ -42,7 +42,7 @@ data:
     columns:
       - image
       - spectrum
-    batch_size: 256
+    batch_size: 128
     num_workers: 8
     collate_fn:
       class_path: astroclip.data.AstroClipCollator
@@ -57,5 +57,5 @@ lr_scheduler:
   class_path: astroclip.CosineAnnealingWithWarmupLR
   init_args:
     T_max: 10_000
-    T_warmup: 0
+    T_warmup: 1_000
     eta_min: ${eval:'${optimizer.init_args.lr}//500'}

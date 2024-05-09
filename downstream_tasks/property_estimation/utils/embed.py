@@ -64,7 +64,7 @@ def get_embeddings(
     models: Dict[str, torch.nn.Module],
     images: torch.Tensor,
     spectra: torch.Tensor,
-    batch_size: int = 64,
+    batch_size: int = 512,
 ) -> dict:
     """Get embeddings for images using models"""
     model_embeddings = {key: [] for key in models.keys()}
@@ -86,7 +86,9 @@ def get_embeddings(
                     .numpy()
                 )
                 model_embeddings["specformer"].append(
-                    models["specformer"](spectra)["embedding"].cpu().numpy()
+                    np.mean(
+                        models["specformer"](spectra)["embedding"].cpu().numpy(), axis=1
+                    )
                 )
 
                 # Embed images
@@ -113,7 +115,9 @@ def get_embeddings(
                 .numpy()
             )
             model_embeddings["specformer"].append(
-                models["specformer"](spectra).cpu().numpy()
+                np.mean(
+                    models["specformer"](spectra)["embedding"].cpu().numpy(), axis=1
+                )
             )
 
             # Embed images
@@ -139,7 +143,7 @@ def main(
     provabgs_file_train: str,
     provabgs_file_test: str,
     pretrained_dir: str,
-    batch_size: int = 128,
+    batch_size: int = 512,
 ):
     # Get directories
     astrodino_pretrained_weights = os.path.join(pretrained_dir, "astrodino.ckpt")
@@ -160,7 +164,7 @@ def main(
     }
 
     # Load data
-    files = [provabgs_file_train, provabgs_file_test]
+    files = [provabgs_file_test, provabgs_file_train]
     for f in files:
         provabgs = Table.read(f)
         images, spectra = provabgs["image"], provabgs["spectrum"]
@@ -170,6 +174,7 @@ def main(
 
         # Remove images and replace with embeddings
         provabgs.remove_column("image")
+        provabgs.remove_column("spectrum")
         for key in models.keys():
             assert len(embeddings[key]) == len(provabgs), "Embeddings incorrect length"
             provabgs[f"{key}_embeddings"] = embeddings[key]
@@ -195,7 +200,7 @@ if __name__ == "__main__":
         type=str,
         default="/mnt/ceph/users/polymathic/astroclip/pretrained/",
     )
-    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--batch_size", type=int, default=512)
     args = parser.parse_args()
 
     main(
