@@ -7,6 +7,7 @@ import datetime
 import json
 import logging
 import os
+import sys
 import time
 from collections import defaultdict, deque
 from pathlib import Path
@@ -14,6 +15,7 @@ from pathlib import Path
 import dinov2.distributed as distributed
 import torch
 import wandb
+from dinov2.eval.setup import setup_and_build_model
 
 logger = logging.getLogger("dinov2")
 
@@ -212,3 +214,23 @@ class SmoothedValue:
             max=self.max,
             value=self.value,
         )
+
+
+def setup_astrodino(
+    astrodino_output_dir: str,
+    astrodino_pretrained_weights: str,
+    astrodino_config_file: str = "./astroclip/astrodino/config.yaml",
+) -> torch.nn.Module:
+    """Set up AstroDINO model"""
+
+    # Set up config to pass to AstroDINO
+    class config:
+        output_dir = astrodino_output_dir
+        config_file = astrodino_config_file
+        pretrained_weights = astrodino_pretrained_weights
+        opts = []
+
+    sys.stdout = open(os.devnull, "w")  # Redirect stdout to null
+    astrodino, _ = setup_and_build_model(config())
+    sys.stderr = sys.__stderr__  # Reset stderr
+    return astrodino
