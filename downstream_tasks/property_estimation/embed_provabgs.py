@@ -57,7 +57,7 @@ def get_embeddings(
                 model_embeddings[key].append(spectrum_models[key](spectra))
 
     model_embeddings = {
-        np.concatenate(model_embeddings[key]) for key in model_embeddings.keys()
+        key: np.concatenate(model_embeddings[key]) for key in model_embeddings.keys()
     }
     return model_embeddings
 
@@ -124,7 +124,7 @@ def main(
         # Remove images and replace with embeddings
         provabgs.remove_column("image")
         provabgs.remove_column("spectrum")
-        for key in models.keys():
+        for key in embeddings.keys():
             assert len(embeddings[key]) == len(provabgs), "Embeddings incorrect length"
             provabgs[f"{key}_embeddings"] = embeddings[key]
 

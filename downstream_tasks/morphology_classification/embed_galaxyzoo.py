@@ -43,7 +43,7 @@ def get_embeddings(
                 model_embeddings[key].append(image_models[key](images))
 
     model_embeddings = {
-        np.concatenate(model_embeddings[key]) for key in model_embeddings.keys()
+        key: np.concatenate(model_embeddings[key]) for key in model_embeddings.keys()
     }
     return model_embeddings
 
@@ -88,7 +88,7 @@ def main(
 
     # Remove images and replace with embeddings
     galaxy_zoo.remove_column("image")
-    for key in models.keys():
+    for key in embeddings.keys():
         assert len(embeddings[key]) == len(galaxy_zoo), "Embeddings incorrect length"
         galaxy_zoo[f"{key}_embeddings"] = embeddings[key]
 

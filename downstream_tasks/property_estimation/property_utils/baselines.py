@@ -176,6 +176,7 @@ def main(
     test_dataset: str,
     save_dir: str,
     modality: str,
+    model_type: str = None,
     num_epochs: int = 100,
     learning_rate: float = 5e-4,
     property_list: Optional = None,
@@ -201,10 +202,23 @@ def main(
 
     # Initialize the model
     if modality == "image":
-        model = ResNet18(n_out=len(properties))
+        if model_type is None or "ResNet18":
+            model_type = "ResNet18"
+            model = ResNet18(n_out=len(properties))
+        elif model_type is "ViT":
+            raise ValueError("Not yet implemented")
+        else:
+            raise ValueError("Invalid model type")
     elif modality == "spectrum":
-        model = SpectrumEncoder(n_latent=len(properties))
+        if model_type is None or "Conv+Att":
+            model_type = "Conv+Att"
+            model = SpectrumEncoder(n_latent=len(properties))
+        elif model_type is "ViT":
+            raise ValueError("Not yet implemented")
+        else:
+            raise ValueError("Invalid model type")
     elif modality == "photometry":
+        model_type = "MLP"
         model = MLP(
             n_in=3, n_out=len(properties), n_hidden=[64, 64], act=[nn.ReLU()] * 3
         )
@@ -226,7 +240,7 @@ def main(
     pred_dict = get_predictions(model, test_loader, test_provabgs, scale, device=device)
 
     # Save the model and the predictions
-    save_dir = os.path.join(save_dir, modality, property_list)
+    save_dir = os.path.join(save_dir, modality, model_type, property_list)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     torch.save(model, os.path.join(save_dir, "model.pt"))

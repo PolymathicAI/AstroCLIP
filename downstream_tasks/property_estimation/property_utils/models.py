@@ -1,4 +1,6 @@
 import lightning as L
+import pyro.distributions as dist
+import pyro.distributions.transforms as T
 import torch
 import torch.nn.functional as F
 import torchvision
@@ -205,3 +207,28 @@ class SpectrumEncoder(nn.Module):
             return self._attention_grad
         else:
             return None
+
+
+class ConditionalFlowStack(dist.conditional.ConditionalComposeTransformModule):
+    """Normalizing flow stack for conditional distribution"""
+
+    def __init__(
+        self,
+        input_dim: int,
+        context_dim: int,
+        hidden_dims: int,
+        num_flows: int,
+        device: str = "cuda",
+    ):
+        coupling_transforms = [
+            T.conditional_spline(
+                input_dim,
+                context_dim,
+                count_bins=4,
+                hidden_dims=hidden_dims,
+                order="linear",
+            ).to(device)
+            for _ in range(num_flows)
+        ]
+
+        super().__init__(coupling_transforms, cache_size=1)
