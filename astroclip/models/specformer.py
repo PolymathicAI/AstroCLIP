@@ -123,7 +123,6 @@ class SpecFormer(L.LightningModule):
         x = F.pad(x, pad=(2, 0, 1, 0), mode="constant", value=0)
         x[:, 0, 0] = (mean.squeeze() - 2) / 2
         x[:, 0, 1] = (std.squeeze() - 2) / 8
-
         return x
 
     def _reset_parameters_datapt(self):
