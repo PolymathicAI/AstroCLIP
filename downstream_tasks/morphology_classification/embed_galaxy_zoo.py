@@ -10,6 +10,7 @@ from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
 
 from astroclip.astrodino.utils import setup_astrodino
+from astroclip.env import format_with_env
 from astroclip.models import AstroClipModel, Moco_v2, SpecFormer
 
 
@@ -97,16 +98,17 @@ def main(
 
 
 if __name__ == "__main__":
+    ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
     parser = ArgumentParser()
     parser.add_argument(
         "--galaxy_zoo_file",
         type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/galaxy_zoo/gz5_decals_crossmatched.h5",
+        default="{ASTROCLIP_ROOT}/datasets/galaxy_zoo/gz5_decals_crossmatched.h5",
     )
     parser.add_argument(
         "--pretrained_dir",
         type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/pretrained",
+        default="{ASTROCLIP_ROOT}/astroclip/pretrained",
     )
     parser.add_argument("--batch_size", type=int, default=1024)
     args = parser.parse_args()

@@ -6,6 +6,7 @@ import torch
 from tqdm import tqdm
 
 from astroclip.data.datamodule import AstroClipCollator, AstroClipDataloader
+from astroclip.env import format_with_env
 from astroclip.models.astroclip import AstroClipModel
 
 
@@ -71,6 +72,7 @@ def main(
 
 
 if __name__ == "__main__":
+    ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
     parser = ArgumentParser()
     parser.add_argument(
         "save_path",
@@ -81,13 +83,13 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="Path to the model",
-        default="/mnt/ceph/users/polymathic/astroclip/outputs/astroclip-alignment/l1uwsr42/checkpoints/last.ckpt",
+        default="{ASTROCLIP_ROOT}/outputs/astroclip-alignment/l1uwsr42/checkpoints/last.ckpt",
     )
     parser.add_argument(
         "--dataset_path",
         type=str,
         help="Path to the dataset",
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/astroclip_file/",
+        default="{ASTROCLIP_ROOT}/datasets/astroclip_file/",
     )
     parser.add_argument(
         "--batch_size",

@@ -9,6 +9,7 @@ from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
 
 from astroclip.data.datamodule import AstroClipCollator, AstroClipDataloader
+from astroclip.env import format_with_env
 
 provabgs_file = "https://data.desi.lbl.gov/public/edr/vac/edr/provabgs/v1.0/BGS_ANY_full.provabgs.sv3.v0.hdf5"
 
@@ -163,17 +164,18 @@ def main(
 
 
 if __name__ == "__main__":
+    ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
     parser = ArgumentParser()
     parser.add_argument(
         "--astroclip_path",
         type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/astroclip_file/",
+        default=f"{ASTROCLIP_ROOT}/datasets/astroclip_file/",
         help="Path to the AstroCLIP dataset.",
     )
     parser.add_argument(
         "--provabgs_path",
         type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/provabgs/provabgs.hdf5",
+        default=f"{ASTROCLIP_ROOT}/datasets/provabgs/provabgs.hdf5",
         help="Path to the PROVABGS dataset.",
     )
     parser.add_argument(

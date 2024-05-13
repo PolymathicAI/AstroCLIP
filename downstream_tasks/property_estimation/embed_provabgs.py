@@ -10,6 +10,7 @@ from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
 
 from astroclip.astrodino.utils import setup_astrodino
+from astroclip.env import format_with_env
 from astroclip.models import AstroClipModel, Moco_v2, SpecFormer
 
 
@@ -133,21 +134,22 @@ def main(
 
 
 if __name__ == "__main__":
+    ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
     parser = ArgumentParser()
     parser.add_argument(
         "--provabgs_file_train",
         type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/provabgs/provabgs_paired_train.hdf5",
+        default="{ASTROCLIP_ROOT}/datasets/provabgs/provabgs_paired_train.hdf5",
     )
     parser.add_argument(
         "--provabgs_file_test",
         type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/provabgs/provabgs_paired_test.hdf5",
+        default="{ASTROCLIP_ROOT}/datasets/provabgs/provabgs_paired_test.hdf5",
     )
     parser.add_argument(
         "--pretrained_dir",
         type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/pretrained/",
+        default="{ASTROCLIP_ROOT}/pretrained/",
     )
     parser.add_argument("--batch_size", type=int, default=512)
     args = parser.parse_args()

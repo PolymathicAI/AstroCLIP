@@ -13,6 +13,7 @@ from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
 
 from astroclip.astrodino.data.augmentations import ToRGB
+from astroclip.env import format_with_env
 
 gz_5_link = (
     "https://zenodo.org/records/4573248/files/gz_decals_volunteers_5.csv?download=1"
@@ -160,13 +161,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--root_dir",
         type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/decals",
+        default="{ASTROCLIP_ROOT}/datasets/decals",
         help="Root directory of DECaLS images.",
     )
     parser.add_argument(
         "--survey_path",
         type=str,
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/galaxy_zoo/gz5_decals_crossmatched.csv",
+        default="{ASTROCLIP_ROOT}/datasets/galaxy_zoo/gz5_decals_crossmatched.csv",
         help="Path to Galaxy Zoo survey.",
     )
 
