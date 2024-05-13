@@ -6,12 +6,7 @@ import torch
 import torch.nn.functional as F
 import torchvision
 from lightning import Trainer
-from numpy import ndarray
-from sklearn.neighbors import KNeighborsRegressor
 from torch import nn
-from torch.utils.data import DataLoader, TensorDataset
-from torchvision import models
-from tqdm import tqdm
 
 
 class Moco_v2(L.LightningModule):
