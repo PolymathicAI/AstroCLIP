@@ -103,12 +103,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--galaxy_zoo_file",
         type=str,
-        default="{ASTROCLIP_ROOT}/datasets/galaxy_zoo/gz5_decals_crossmatched.h5",
+        default=f"{ASTROCLIP_ROOT}/datasets/galaxy_zoo/gz5_decals_crossmatched.h5",
     )
     parser.add_argument(
         "--pretrained_dir",
         type=str,
-        default="{ASTROCLIP_ROOT}/astroclip/pretrained",
+        default=f"{ASTROCLIP_ROOT}/astroclip/pretrained",
     )
     parser.add_argument("--batch_size", type=int, default=1024)
     args = parser.parse_args()

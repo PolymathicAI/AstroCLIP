@@ -139,17 +139,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--provabgs_file_train",
         type=str,
-        default="{ASTROCLIP_ROOT}/datasets/provabgs/provabgs_paired_train.hdf5",
+        default=f"{ASTROCLIP_ROOT}/datasets/provabgs/provabgs_paired_train.hdf5",
     )
     parser.add_argument(
         "--provabgs_file_test",
         type=str,
-        default="{ASTROCLIP_ROOT}/datasets/provabgs/provabgs_paired_test.hdf5",
+        default=f"{ASTROCLIP_ROOT}/datasets/provabgs/provabgs_paired_test.hdf5",
     )
     parser.add_argument(
         "--pretrained_dir",
         type=str,
-        default="{ASTROCLIP_ROOT}/pretrained/",
+        default=f"{ASTROCLIP_ROOT}/pretrained/",
     )
     parser.add_argument("--batch_size", type=int, default=512)
     args = parser.parse_args()

@@ -161,13 +161,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--root_dir",
         type=str,
-        default="{ASTROCLIP_ROOT}/datasets/decals",
+        default=f"{ASTROCLIP_ROOT}/datasets/decals",
         help="Root directory of DECaLS images.",
     )
     parser.add_argument(
         "--survey_path",
         type=str,
-        default="{ASTROCLIP_ROOT}/datasets/galaxy_zoo/gz5_decals_crossmatched.csv",
+        default=f"{ASTROCLIP_ROOT}/datasets/galaxy_zoo/gz5_decals_crossmatched.csv",
         help="Path to Galaxy Zoo survey.",
     )
 
