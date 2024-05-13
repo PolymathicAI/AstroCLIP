@@ -1,6 +1,6 @@
 import os
 from argparse import ArgumentParser
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -17,11 +17,14 @@ from torchvision.transforms import (
 )
 from tqdm import trange
 
-from astroclip import format_with_env
+from astroclip.env import format_with_env
+from astroclip.models.astroclip import ImageHead
 from models import MLP, ResNet18, SpectrumEncoder
 
-ASTROCLIP_ROOT = format_with_env
-transforms = Compose([RandomHorizontalFlip(), RandomVerticalFlip(), GaussianBlur(3)])
+# Define transforms for image model
+image_transforms = Compose(
+    [RandomHorizontalFlip(), RandomVerticalFlip(), GaussianBlur(3)]
+)
 
 
 def setup_supervised_data(
@@ -112,7 +115,7 @@ def train_model(
         model.train()
         for X_batch, y_batch in train_loader:
             if modality == "image":
-                X_batch = transforms(X_batch)
+                X_batch = image_transforms(X_batch)
             y_pred = model(X_batch.to(device)).squeeze()
             loss = criterion(y_pred, y_batch.to(device).squeeze())
             train_loss += loss.item()
@@ -172,23 +175,30 @@ def get_predictions(model, test_loader, test_provabgs, scale, device="cuda"):
     return pred_dict
 
 
-def main(
+def calculate_baselines(
     train_dataset: str,
     test_dataset: str,
-    save_dir: str,
+    save_path: str,
     modality: str,
-    model_type: str = None,
+    model_type: str,
     num_epochs: int = 100,
     learning_rate: float = 5e-4,
-    property_list: Optional = None,
+    properties: str = None,
     device: str = "cuda",
 ):
-    if property_list == "redshift":
-        properties = ["Z_HP"]
-    elif property_list == "global_properties":
-        properties = ["LOG_MSTAR", "Z_MW", "TAGE_MW", "sSFR"]
-    elif property_list == "all":
-        properties = ["Z_HP", "LOG_MSTAR", "Z_MW", "TAGE_MW", "sSFR"]
+    # Define output directory avoiding collisions
+    save_dir_base = os.path.join(save_path, modality, model_type, properties)
+    save_dir = save_dir_base
+    v_int = 0  # Suffix to add in case of collisions
+    while os.path.exists(save_dir):
+        print(f"Directory {save_dir} already exists, adding suffix")
+        v_int += 1
+        save_dir = f"{save_dir_base}-v{v_int}"
+
+    if properties == "redshift":
+        property_list = ["Z_HP"]
+    elif properties == "global_properties":
+        property_list = ["LOG_MSTAR", "Z_MW", "TAGE_MW", "sSFR"]
     else:
         raise ValueError(
             "Invalid properties, choose from redshift or global_properties."
@@ -200,30 +210,41 @@ def main(
 
     # Get the data loaders & normalization
     train_loader, val_loader, test_loader, scale = setup_supervised_data(
-        train_provabgs, test_provabgs, modality, properties=properties
+        train_provabgs, test_provabgs, modality, properties=property_list
     )
 
     # Initialize the model
     if modality == "image":
-        if model_type is None or "ResNet18":
-            model_type = "ResNet18"
-            model = ResNet18(n_out=len(properties))
-        elif model_type is "ViT":
+        if model_type == "ResNet18":
+            model = ResNet18(n_out=len(property_list))
+        elif model_type == "ViT":
             raise ValueError("Not yet implemented")
+        elif model_type == "AstroDINO":
+            embed_dim = 1024
+            model = nn.Sequential(
+                ImageHead(
+                    freeze_backbone=False,
+                    save_directory=save_dir + "/dino/",
+                    embed_dim=embed_dim,
+                    model_weights="",
+                    config="../../../astroclip/astrodino/config.yaml",
+                ),
+                nn.Linear(embed_dim, len(property_list)),
+            )
         else:
             raise ValueError("Invalid model type")
     elif modality == "spectrum":
-        if model_type is None or "Conv+Att":
-            model_type = "Conv+Att"
-            model = SpectrumEncoder(n_latent=len(properties))
-        elif model_type is "ViT":
+        if model_type == "Conv+Att":
+            model = SpectrumEncoder(n_latent=len(property_list))
+        elif model_type == "ViT":
             raise ValueError("Not yet implemented")
         else:
             raise ValueError("Invalid model type")
     elif modality == "photometry":
-        model_type = "MLP"
+        if model_type != "MLP":
+            raise ValueError(f"Invalid model value {model_type}")
         model = MLP(
-            n_in=3, n_out=len(properties), n_hidden=[64, 64], act=[nn.ReLU()] * 3
+            n_in=3, n_out=len(property_list), n_hidden=[64, 64], act=[nn.ReLU()] * 3
         )
 
     # Train the model
@@ -233,7 +254,7 @@ def main(
         val_loader,
         modality,
         scale,
-        properties,
+        property_list,
         num_epochs=num_epochs,
         lr=learning_rate,
     )
@@ -243,39 +264,47 @@ def main(
     pred_dict = get_predictions(model, test_loader, test_provabgs, scale, device=device)
 
     # Save the model and the predictions
-    save_dir = os.path.join(save_dir, modality, model_type, property_list)
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+
+    print(f"Saving in {save_dir}")
+    os.makedirs(save_dir, exist_ok=True)
     torch.save(model, os.path.join(save_dir, "model.pt"))
     torch.save(pred_dict, os.path.join(save_dir, "test_pred.pt"))
 
 
 if __name__ == "__main__":
+    ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
     parser = ArgumentParser()
     parser.add_argument(
         "--train_dataset",
         type=str,
         help="Path to the training dataset",
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/provabgs/provabgs_paired_train.hdf5",
+        default=f"{ASTROCLIP_ROOT}/datasets/provabgs/provabgs_paired_train.hdf5",
     )
     parser.add_argument(
         "--test_dataset",
         type=str,
         help="Path to the test dataset",
-        default="/mnt/ceph/users/polymathic/astroclip/datasets/provabgs/provabgs_paired_test.hdf5",
+        default=f"{ASTROCLIP_ROOT}/datasets/provabgs/provabgs_paired_test.hdf5",
     )
     parser.add_argument(
         "--save_dir",
         type=str,
         help="Directory to save the model and predictions",
-        default="/mnt/ceph/users/polymathic/astroclip/supervised/",
+        default=f"{ASTROCLIP_ROOT}/supervised/",
     )
     parser.add_argument(
         "--modality",
         type=str,
-        help="Modality of the data (image, spectrum, photometry)",
+        help="Modality of the data ('image', 'spectrum', 'photometry')",
         default="image",
     )
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        help="Model to use (e.g. 'ResNet18', 'AstroDINO', 'ViT', 'Conv+Att', 'MLP' )",
+        default=None,
+    )
+
     parser.add_argument(
         "--num_epochs",
         type=int,
@@ -291,17 +320,29 @@ if __name__ == "__main__":
     parser.add_argument(
         "--properties",
         type=str,
-        help="Properties to predict (redshift or global_properties)",
+        help="Properties to predict ('redshift' or 'global_properties')",
         default="global_properties",
     )
     args = parser.parse_args()
 
-    main(
-        args.train_dataset,
-        args.test_dataset,
-        args.save_dir,
-        args.modality,
-        args.num_epochs,
-        args.learning_rate,
-        args.properties,
+    # Infer model_type if missing
+    if args.model_type == None:
+        if args.modality == "image":
+            model_type = "ResNet18"
+        elif args.modality == "spectrum":
+            model_type = "Conv+Att"
+        elif args.modality == "photometry":
+            model_type = "MLP"
+    else:
+        model_type = args.model_type
+
+    calculate_baselines(
+        train_dataset=args.train_dataset,
+        test_dataset=args.test_dataset,
+        save_path=args.save_dir,
+        modality=args.modality,
+        model_type=model_type,
+        num_epochs=args.num_epochs,
+        learning_rate=args.learning_rate,
+        properties=args.properties,
     )

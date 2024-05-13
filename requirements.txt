@@ -6,7 +6,9 @@ lightning[extra]
 plotly
 provabgs @ git+https://github.com/changhoonhahn/provabgs.git
 pycairo
+pyro-ppl
 python-dotenv
 scikit-image
+scikit-learn
 torchvision==0.15.0
 wandb
