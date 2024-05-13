@@ -74,7 +74,7 @@ def train_eval_on_question(
     # Training loop
     best_val_loss = float("inf")
     best_metrics = None
-    for epoch in tqdm(range(epochs)):
+    for epoch in epochs:
         mlp.train()
         train_loss = 0
         for data, target in train_loader:

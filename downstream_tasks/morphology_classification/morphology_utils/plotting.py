@@ -5,6 +5,7 @@ import numpy as np
 
 
 def plot_radar(outputs: dict, metric: str, file_path: str, fontsize: int = 25):
+    """Functionality for plotting radar chart"""
     questions = {}
     for key in outputs.keys():
         questions[key] = [
