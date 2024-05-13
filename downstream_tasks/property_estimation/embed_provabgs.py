@@ -86,9 +86,9 @@ def main(
     ).encoder_q
 
     # Set up SpecFormer model
-    specformer = SpecFormer(
-        **torch.load(pretrained_weights["specformer"])["hyper_parameters"]
-    ).cuda()
+    checkpoint = torch.load(pretrained_weights["specformer"])
+    specformer = SpecFormer(**checkpoint["hyper_parameters"])
+    specformer.load_state_dict(checkpoint["state_dict"]).cuda()
 
     # Set up AstroDINO model
     astrodino = setup_astrodino(astrodino_output_dir, pretrained_weights["astrodino"])
@@ -96,7 +96,7 @@ def main(
     # Set up model dict
     image_models = {
         "astrodino": lambda x: astrodino(x).cpu().numpy(),
-        "stein": lambda x: stein(CenterCrop(96)(x)).cpu().numpy(),
+        "stein": lambda x: stein(x).cpu().numpy(),
         "astroclip_image": lambda x: astroclip(x, input_type="image").cpu().numpy(),
     }
 

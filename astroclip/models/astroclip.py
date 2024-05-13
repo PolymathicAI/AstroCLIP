@@ -261,6 +261,7 @@ class SpectrumHead(nn.Module):
         # Load the model from the checkpoint
         checkpoint = torch.load(model_path)
         self.backbone = SpecFormer(**checkpoint["hyper_parameters"])
+        self.backbone.load_state_dict(checkpoint["state_dict"])
 
         # Freeze backbone if necessary
         self.freeze_backbone = freeze_backbone

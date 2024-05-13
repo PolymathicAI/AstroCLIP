@@ -76,7 +76,7 @@ def main(
     # Set up model dict
     image_models = {
         "astrodino": lambda x: astrodino(x).cpu().numpy(),
-        "stein": lambda x: stein(CenterCrop(96)(x)).cpu().numpy(),
+        "stein": lambda x: stein(x).cpu().numpy(),
         "astroclip": lambda x: astroclip(x, input_type="image").cpu().numpy(),
     }
     print("Models are correctly set up!")
