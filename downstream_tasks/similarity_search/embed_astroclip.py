@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 
+import h5py
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -8,8 +9,15 @@ from astroclip.data.datamodule import AstroClipCollator, AstroClipDataloader
 from astroclip.models.astroclip import AstroClipModel
 
 
-def main(model_path: str, dataset_path: str, save_path: str, batch_size: int = 256):
+def main(
+    model_path: str,
+    dataset_path: str,
+    save_path: str,
+    max_size: int = None,
+    batch_size: int = 256,
+):
     """Extract embeddings from the AstroClip model and save them to a file"""
+    # Load the model
     astroclip = AstroClipModel.load_from_checkpoint(model_path)
 
     # Get the dataloader
@@ -28,9 +36,15 @@ def main(model_path: str, dataset_path: str, save_path: str, batch_size: int = 2
     # Get the embeddings over the dataset
     im_embeddings, sp_embeddings, images, spectra = [], [], [], []
     with torch.no_grad():
-        for batch_test in tqdm(val_loader):
+        for idx, batch_test in tqdm(
+            enumerate(val_loader), desc="Extracting embeddings"
+        ):
+            # Break if max_size is reached
+            if max_size is not None and idx * batch_size >= max_size:
+                break
+
             # Append the image and spectrum to the list
-            images.append(batch_test["image"].permute(0, 3, 1, 2))
+            images.append(batch_test["image"])
             spectra.append(batch_test["spectrum"])
 
             # Extract the embeddings
@@ -47,16 +61,13 @@ def main(model_path: str, dataset_path: str, save_path: str, batch_size: int = 2
                 .numpy()
             )
 
-    # Save the embeddings
-    torch.save(
-        {
-            "image_features": np.concatenate(im_embeddings),
-            "spectrum_features": np.concatenate(sp_embeddings),
-            "images": np.concatenate(images),
-            "spectra": np.concatenate(spectra),
-        },
-        save_path,
-    )
+    # Save as an HDF5 file
+    with h5py.File(save_path, "w") as f:
+        f.create_dataset("image", data=np.concatenate(images))
+        f.create_dataset("spectrum", data=np.concatenate(spectra))
+        f.create_dataset("image_embeddings", data=np.concatenate(im_embeddings))
+        f.create_dataset("spectrum_embeddings", data=np.concatenate(sp_embeddings))
+    print(f"Embeddings saved to {save_path}")
 
 
 if __name__ == "__main__":
@@ -84,5 +95,17 @@ if __name__ == "__main__":
         help="Batch size",
         default=256,
     )
+    parser.add_argument(
+        "--max_size",
+        type=int,
+        help="Maximum number of samples to use",
+        default=None,
+    )
     args = parser.parse_args()
-    main(args.model_path, args.dataset_path, args.save_path, args.batch_size)
+    main(
+        args.model_path,
+        args.dataset_path,
+        args.save_path,
+        args.max_size,
+        args.batch_size,
+    )
