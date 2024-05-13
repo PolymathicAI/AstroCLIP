@@ -50,11 +50,10 @@ def train_eval_on_question(
     epochs: int = 25,
     dropout: float = 0.2,
 ) -> dict:
-    # Split the dataset into training and validation sets
+    """Function to train and evaluate a simple feedforward neural network on a dataset."""
     X_train, X_val, y_train, y_val = train_test_split(
         X_train, y_train, test_size=0.1, random_state=42
     )
-
     train_dataset = TensorDataset(X_train, y_train)
     val_dataset = TensorDataset(X_val, y_val)
 
