@@ -17,9 +17,10 @@ from torchvision.transforms import (
 )
 from tqdm import trange
 
+from astroclip import format_with_env
 from models import MLP, ResNet18, SpectrumEncoder
 
-# Define transforms for image model
+ASTROCLIP_ROOT = format_with_env
 transforms = Compose([RandomHorizontalFlip(), RandomVerticalFlip(), GaussianBlur(3)])
 
 
