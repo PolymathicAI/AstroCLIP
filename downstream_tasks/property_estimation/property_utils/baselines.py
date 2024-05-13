@@ -187,6 +187,8 @@ def main(
         properties = ["Z_HP"]
     elif property_list == "global_properties":
         properties = ["LOG_MSTAR", "Z_MW", "TAGE_MW", "sSFR"]
+    elif property_list == "all":
+        properties = ["Z_HP", "LOG_MSTAR", "Z_MW", "TAGE_MW", "sSFR"]
     else:
         raise ValueError(
             "Invalid properties, choose from redshift or global_properties."
