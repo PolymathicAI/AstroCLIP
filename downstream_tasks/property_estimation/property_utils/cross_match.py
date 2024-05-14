@@ -67,7 +67,7 @@ def _get_best_fit(provabgs: Table):
     return provabgs
 
 
-def main(
+def cross_match_provabgs(
     astroclip_path: str,
     provabgs_path: str,
     save_path: str = None,
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(
+    cross_match_provabgs(
         astroclip_path=args.astroclip_path,
         provabgs_path=args.provabgs_path,
         save_path=args.save_path,

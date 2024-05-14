@@ -1,10 +1,16 @@
+import os
+
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.ndimage import gaussian_filter1d
 
 
 def plot_similar_images(
-    query_images: list, sims: dict, similarity_type: str = "im_sim"
+    query_images: list,
+    sims: dict,
+    similarity_type: str = "im_sim",
+    num_retrievals: int = 8,
+    save_dir: str = None,
 ):
     """Functionality for plotting retrieved galaxy images"""
     plt.figure(figsize=[19.4, 6.1])
@@ -12,12 +18,17 @@ def plot_similar_images(
         plt.subplot(len(query_images), 13, n * 13 + 1)
         plt.imshow(img.T)
         plt.axis("off")
-        for j in range(8):
+        for j in range(num_retrievals):
             plt.subplot(len(query_images), 13, n * 13 + j + 1 + 1)
             plt.imshow(sims[n][similarity_type][j].T)
             plt.axis("off")
     plt.subplots_adjust(wspace=0.01, hspace=0.0)
     plt.subplots_adjust(wspace=0.00, hspace=0.01)
+
+    if save_dir is not None:
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        plt.savefig(os.path.join(save_dir, f"retrieval_{similarity_type}.png"))
 
 
 def plot_similar_spectra(

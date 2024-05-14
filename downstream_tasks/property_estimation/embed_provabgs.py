@@ -63,7 +63,7 @@ def get_embeddings(
     return model_embeddings
 
 
-def main(
+def embed_provabgs(
     provabgs_file_train: str,
     provabgs_file_test: str,
     pretrained_dir: str,
@@ -89,7 +89,8 @@ def main(
     # Set up SpecFormer model
     checkpoint = torch.load(pretrained_weights["specformer"])
     specformer = SpecFormer(**checkpoint["hyper_parameters"])
-    specformer.load_state_dict(checkpoint["state_dict"]).cuda()
+    specformer.load_state_dict(checkpoint["state_dict"])
+    specformer.cuda()
 
     # Set up AstroDINO model
     astrodino = setup_astrodino(astrodino_output_dir, pretrained_weights["astrodino"])
@@ -154,7 +155,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=512)
     args = parser.parse_args()
 
-    main(
+    embed_provabgs(
         args.provabgs_file_train,
         args.provabgs_file_test,
         args.pretrained_dir,

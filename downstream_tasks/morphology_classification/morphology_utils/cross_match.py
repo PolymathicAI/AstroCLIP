@@ -117,7 +117,7 @@ def _get_file_location(root_dir: List[str]) -> List[str]:
     return files
 
 
-def main(root_dir: str, survey_path: str) -> None:
+def cross_match_galaxy_zoo(root_dir: str, survey_path: str) -> None:
     """
     Pairs Galaxy Zoo classifications with DECaLS images in an Astropy table.
 
@@ -172,4 +172,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(args.root_dir, args.survey_path)
+    cross_match_galaxy_zoo(args.root_dir, args.survey_path)

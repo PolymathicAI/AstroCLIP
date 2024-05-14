@@ -49,7 +49,7 @@ def get_embeddings(
     return model_embeddings
 
 
-def main(
+def embed_galaxy_zoo(
     galaxy_zoo_file: str,
     pretrained_dir: str,
     batch_size: int = 128,
@@ -108,12 +108,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--pretrained_dir",
         type=str,
-        default=f"{ASTROCLIP_ROOT}/astroclip/pretrained",
+        default=f"{ASTROCLIP_ROOT}/pretrained",
     )
     parser.add_argument("--batch_size", type=int, default=1024)
     args = parser.parse_args()
 
-    main(
+    embed_galaxy_zoo(
         args.galaxy_zoo_file,
         args.pretrained_dir,
         args.batch_size,

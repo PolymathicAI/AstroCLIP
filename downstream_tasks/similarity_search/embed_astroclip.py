@@ -10,12 +10,13 @@ from astroclip.env import format_with_env
 from astroclip.models.astroclip import AstroClipModel
 
 
-def main(
+def embed_astroclip(
     model_path: str,
     dataset_path: str,
     save_path: str,
     max_size: int = None,
     batch_size: int = 256,
+    loader_type: str = "val",
 ):
     """Extract embeddings from the AstroClip model and save them to a file"""
     # Load the model
@@ -31,15 +32,18 @@ def main(
     )
     loader.setup("fit")
 
-    # Set up validation loader
-    val_loader = loader.val_dataloader()
+    # Set up loader
+    if loader_type == "train":
+        loader = loader.train_dataloader()
+    elif loader_type == "val":
+        loader = loader.val_dataloader()
+    else:
+        raise ValueError("loader must be either 'train' or 'val'")
 
     # Get the embeddings over the dataset
     im_embeddings, sp_embeddings, images, spectra = [], [], [], []
     with torch.no_grad():
-        for idx, batch_test in tqdm(
-            enumerate(val_loader), desc="Extracting embeddings"
-        ):
+        for idx, batch_test in tqdm(enumerate(loader), desc="Extracting embeddings"):
             # Break if max_size is reached
             if max_size is not None and idx * batch_size >= max_size:
                 break
@@ -83,13 +87,13 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="Path to the model",
-        default="{ASTROCLIP_ROOT}/outputs/astroclip-alignment/l1uwsr42/checkpoints/last.ckpt",
+        default=f"{ASTROCLIP_ROOT}/outputs/astroclip-alignment/q56psz7u/checkpoints/last.ckpt",
     )
     parser.add_argument(
         "--dataset_path",
         type=str,
         help="Path to the dataset",
-        default="{ASTROCLIP_ROOT}/datasets/astroclip_file/",
+        default=f"{ASTROCLIP_ROOT}/datasets/astroclip_file/",
     )
     parser.add_argument(
         "--batch_size",
@@ -103,11 +107,18 @@ if __name__ == "__main__":
         help="Maximum number of samples to use",
         default=None,
     )
+    parser.add_argument(
+        "--loader_type",
+        type=str,
+        help="Which loader to use (train or val)",
+        default="val",
+    )
     args = parser.parse_args()
-    main(
+    embed_astroclip(
         args.model_path,
         args.dataset_path,
         args.save_path,
         args.max_size,
         args.batch_size,
+        args.loader_type,
     )

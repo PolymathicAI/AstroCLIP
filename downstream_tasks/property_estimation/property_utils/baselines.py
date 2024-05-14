@@ -59,11 +59,6 @@ def setup_supervised_data(
             dtype=torch.float32,
         ).permute(1, 0)
 
-    # Scale the data
-    X_mean, X_std = X_train.mean(), X_train.std()
-    X_train = (X_train - X_mean) / X_std
-    X_test = (X_test - X_mean) / X_std
-
     # Set up the property data
     property_data, scale = {}, {}
     for p in properties:
@@ -304,7 +299,6 @@ if __name__ == "__main__":
         help="Model to use (e.g. 'ResNet18', 'AstroDINO', 'ViT', 'Conv+Att', 'MLP' )",
         default=None,
     )
-
     parser.add_argument(
         "--num_epochs",
         type=int,
