@@ -32,7 +32,11 @@ def plot_similar_images(
 
 
 def plot_similar_spectra(
-    query_spectra: list, query_images: list, sims: dict, similarity_type: str = "im_sim"
+    query_spectra: list,
+    query_images: list,
+    sims: dict,
+    similarity_type: str = "im_sim",
+    save_dir: str = None,
 ):
     """Functionality for plotting retrieved galaxy spectra"""
     l = np.linspace(3586.7408577, 10372.89543574, query_spectra[0].shape[0])
@@ -76,3 +80,8 @@ def plot_similar_spectra(
         image_data = query_images[n]
         axins.imshow(image_data.T)
         axins.axis("off")
+
+    if save_dir is not None:
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        plt.savefig(os.path.join(save_dir, f"retrieval_{similarity_type}.png"))

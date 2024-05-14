@@ -213,8 +213,6 @@ def calculate_baselines(
     if modality == "image":
         if model_type == "ResNet18":
             model = ResNet18(n_out=len(property_list))
-        elif model_type == "ViT":
-            raise ValueError("Not yet implemented")
         elif model_type == "AstroDINO":
             embed_dim = 1024
             model = nn.Sequential(
@@ -232,8 +230,6 @@ def calculate_baselines(
     elif modality == "spectrum":
         if model_type == "Conv+Att":
             model = SpectrumEncoder(n_latent=len(property_list))
-        elif model_type == "ViT":
-            raise ValueError("Not yet implemented")
         elif model_type == "Specformer":
             # Note: checkpoint is only used to load the model hyperparameters
             model = nn.Sequential(

@@ -87,7 +87,7 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="Path to the model",
-        default=f"{ASTROCLIP_ROOT}/outputs/astroclip-alignment/q56psz7u/checkpoints/last.ckpt",
+        default=f"{ASTROCLIP_ROOT}/pretrained/astroclip.ckpt",
     )
     parser.add_argument(
         "--dataset_path",
