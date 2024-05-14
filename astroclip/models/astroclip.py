@@ -244,6 +244,7 @@ class SpectrumHead(nn.Module):
         model_embed_dim: int = 768,
         dropout: float = 0.1,
         freeze_backbone: bool = True,
+        load_pretrained_weights=True,
     ):
         """
         Cross-attention spectrum module that takes a spectrum and passes it through a pretrained SpecFormer model and
@@ -261,7 +262,8 @@ class SpectrumHead(nn.Module):
         # Load the model from the checkpoint
         checkpoint = torch.load(model_path)
         self.backbone = SpecFormer(**checkpoint["hyper_parameters"])
-        self.backbone.load_state_dict(checkpoint["state_dict"])
+        if load_pretrained_weights:
+            self.backbone.load_state_dict(checkpoint["state_dict"])
 
         # Freeze backbone if necessary
         self.freeze_backbone = freeze_backbone

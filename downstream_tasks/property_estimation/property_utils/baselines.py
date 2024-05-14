@@ -18,8 +18,11 @@ from torchvision.transforms import (
 from tqdm import trange
 
 from astroclip.env import format_with_env
-from astroclip.models.astroclip import ImageHead
+from astroclip.models.astroclip import ImageHead, SpectrumHead
 from models import MLP, ResNet18, SpectrumEncoder
+
+ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
+
 
 # Define transforms for image model
 image_transforms = Compose(
@@ -46,8 +49,6 @@ def setup_supervised_data(
         X_train, X_test = torch.tensor(
             train_data[modality], dtype=torch.float32
         ), torch.tensor(test_data[modality], dtype=torch.float32)
-        X_train = X_train.squeeze().squeeze()
-        X_test = X_test.squeeze().squeeze()
 
     elif modality == "photometry":
         X_train = torch.tensor(
@@ -233,6 +234,16 @@ def calculate_baselines(
             model = SpectrumEncoder(n_latent=len(property_list))
         elif model_type == "ViT":
             raise ValueError("Not yet implemented")
+        elif model_type == "Specformer":
+            # Note: checkpoint is only used to load the model hyperparameters
+            model = nn.Sequential(
+                SpectrumHead(
+                    model_path=f"{ASTROCLIP_ROOT}/pretrained/specformer.ckpt",
+                    load_pretrained_weights=False,
+                ),
+                nn.LazyLinear(len(property_list)),
+            )
+
         else:
             raise ValueError("Invalid model type")
     elif modality == "photometry":
@@ -267,7 +278,6 @@ def calculate_baselines(
 
 
 if __name__ == "__main__":
-    ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
     parser = ArgumentParser()
     parser.add_argument(
         "--train_dataset",
