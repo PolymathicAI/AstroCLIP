@@ -172,3 +172,5 @@ notebooks/dev.ipynb
 .local
 ceph_data
 astroclip/_version.py
+lightning_logs
+supervised.sh

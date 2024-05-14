@@ -1,19 +1,21 @@
+import os
 from math import pi
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_radar(outputs: dict, metric: str, file_path: str, fontsize: int = 25):
+def plot_radar(outputs: dict, metric: str, file_path: str, fontsize: int = 18):
     """Functionality for plotting radar chart"""
     questions = {}
     for key in outputs.keys():
         questions[key] = [
             outputs[key][question][metric] for question in outputs[key].keys()
         ]
+    labels = outputs[key].keys()
 
     # Add Zoobot scores
-    questions["ZooBot"] = [
+    questions["ZooBot Reported"] = [
         zoobot_scores[question][metric] for question in zoobot_scores.keys()
     ]
 
@@ -28,7 +30,6 @@ def plot_radar(outputs: dict, metric: str, file_path: str, fontsize: int = 25):
 
     # Plot each array on the radar chart
     for key in questions.keys():
-        # if key == 'ZooBot': continue
         stats = [questions[key][i] for i in range(len(questions[key]))]
         stats += stats[:1]
         ax.plot(
@@ -39,8 +40,6 @@ def plot_radar(outputs: dict, metric: str, file_path: str, fontsize: int = 25):
             linestyle=styles.pop(0),
             color=colors.pop(0),
         )
-
-    labels = outputs[key].keys()
 
     # capitalize labels
     labels = [label.capitalize() for label in labels]
@@ -63,6 +62,8 @@ def plot_radar(outputs: dict, metric: str, file_path: str, fontsize: int = 25):
     )  # Explicitly set fontsize for legend
 
     # Save fig
+    if not os.path.exists(os.path.dirname(file_path)):
+        os.makedirs(os.path.dirname(file_path))
     plt.savefig(file_path)
     plt.close()
 

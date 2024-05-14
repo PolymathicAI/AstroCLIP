@@ -6,7 +6,6 @@ import numpy as np
 import torch
 from astropy.table import Table
 from dinov2.eval.setup import setup_and_build_model
-from torchvision.transforms import CenterCrop, Compose
 from tqdm import tqdm
 
 from astroclip.astrodino.utils import setup_astrodino

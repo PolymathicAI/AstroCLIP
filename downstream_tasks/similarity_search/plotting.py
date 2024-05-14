@@ -36,6 +36,7 @@ def plot_similar_spectra(
     query_images: list,
     sims: dict,
     similarity_type: str = "im_sim",
+    num_retrievals: int = 5,
     save_dir: str = None,
 ):
     """Functionality for plotting retrieved galaxy spectra"""
@@ -52,7 +53,7 @@ def plot_similar_spectra(
             label="spectrum of query image",
         )
 
-        for j in range(5):
+        for j in range(num_retrievals):
             if j == 0:
                 plt.plot(
                     l,
@@ -70,10 +71,12 @@ def plot_similar_spectra(
                     lw=1,
                     color="gray",
                 )
+            # set y lim
+            plt.ylim(1.1 * min(sp[:, 0]), 1.1 * max(sp[:, 0]))
 
-        plt.xlabel(r"$\lambda$")
-        plt.ylabel("flux")
-        plt.legend()
+        plt.xlabel(r"$\lambda$", fontsize=18)
+        plt.ylabel("flux", fontsize=18)
+        plt.legend(fontsize=18, loc="lower right")
 
         # Add inset image to the first subplot
         axins = plt.gca().inset_axes([0, 0.55, 0.4, 0.4])
