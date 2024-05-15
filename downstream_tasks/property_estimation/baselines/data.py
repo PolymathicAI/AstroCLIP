@@ -11,7 +11,7 @@ class SupervisedDataModule(L.LightningDataModule):
         test_data,
         modality,
         properties,
-        batch_size=128,
+        batch_size=512,
         train_size=0.8,
     ):
         super().__init__()

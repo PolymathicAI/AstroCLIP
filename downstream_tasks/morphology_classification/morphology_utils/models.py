@@ -57,8 +57,10 @@ def train_eval_on_question(
     train_dataset = TensorDataset(X_train, y_train)
     val_dataset = TensorDataset(X_val, y_val)
 
-    # Create a DataLoader
+    # Compute class weights
     samples_weight = y_train.max(dim=1).values  # Taking max fraction as the weight
+
+    # Create a DataLoader
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
