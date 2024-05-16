@@ -47,6 +47,10 @@ def train_baseline(
     properties: str = None,
     accelerator: str = "gpu",
 ):
+    # Load the data
+    train_provabgs = Table.read(train_dataset)
+    test_provabgs = Table.read(test_dataset)
+
     # Define output directory avoiding collisions
     save_dir_base = os.path.join(save_path, modality, model_name, properties)
     save_dir = save_dir_base
@@ -66,23 +70,23 @@ def train_baseline(
             "Invalid properties, choose from redshift or global_properties."
         )
 
-    # Load the data
-    train_provabgs = Table.read(train_dataset)
-    test_provabgs = Table.read(test_dataset)
-
     # Get the data loaders & normalization
     data_module = SupervisedDataModule(
-        train_provabgs, test_provabgs, modality, properties=property_list
+        train_provabgs,
+        test_provabgs,
+        modality,
+        properties=property_list,
     )
     data_module.setup(stage="fit")
 
     # Get the model
     model = SupervisedModel(
-        model_name,
-        modality,
-        property_list,
-        data_module.scale,
+        model_name=model_name,
+        modality=modality,
+        properties=property_list,
+        scale=data_module.scale,
         lr=learning_rate,
+        num_epochs=num_epochs,
         save_dir=save_dir,
     )
 
@@ -110,6 +114,7 @@ def train_baseline(
         properties=property_list,
         scale=data_module.scale,
         lr=learning_rate,
+        num_epochs=num_epochs,
         save_dir=save_dir,
     )
 

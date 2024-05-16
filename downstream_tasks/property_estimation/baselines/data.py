@@ -1,27 +1,32 @@
 import lightning as L
 import numpy as np
 import torch
+from astropy.table import Table
 from torch.utils.data import DataLoader, TensorDataset, random_split
 
 
 class SupervisedDataModule(L.LightningDataModule):
     def __init__(
         self,
-        train_data,
-        test_data,
-        modality,
-        properties,
-        batch_size=512,
-        train_size=0.8,
+        train_data: Table,
+        test_data: Table,
+        modality: str,
+        properties: list,
+        batch_size: int = 128,
+        train_size: float = 0.8,
     ):
         super().__init__()
+        # Load the data
         self.train_data = train_data
         self.test_data = test_data
+
+        # Set the modality and properties
         self.modality = modality
         self.properties = properties
         self.batch_size = batch_size
         self.train_size = train_size
 
+        # Check the modality
         if modality not in ["image", "spectrum", "photometry"]:
             raise ValueError("Invalid modality")
 

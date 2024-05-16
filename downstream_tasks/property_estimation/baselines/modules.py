@@ -11,18 +11,31 @@ from torchvision.transforms import (
 
 from astroclip.env import format_with_env
 from astroclip.models.astroclip import ImageHead, SpectrumHead
+from astroclip.models.specformer import SpecFormer
+from astroclip.modules import MLP as SpecFormerMLP
+from astroclip.modules import CrossAttentionHead
 
 ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
 
 
 class SupervisedModel(L.LightningModule):
-    def __init__(self, model_name, modality, properties, scale, lr=1e-3, save_dir=None):
+    def __init__(
+        self,
+        model_name,
+        modality,
+        properties,
+        scale,
+        num_epochs,
+        lr=1e-3,
+        save_dir=None,
+    ):
         super().__init__()
         self.model_name = model_name
         self.modality = modality
         self.properties = properties
         self.scale = scale
         self.lr = lr
+        self.num_epochs = num_epochs
         self.criterion = nn.MSELoss()
         self.save_dir = save_dir
         self._initialize_model(model_name)
@@ -36,12 +49,8 @@ class SupervisedModel(L.LightningModule):
 
     def _initialize_model(self, model_name):
         if model_name == "resnet18":
-            if self.modality != "image":
-                raise ValueError("Invalid modality for ResNet18")
             self.model = ResNet18(n_out=len(self.properties))
         elif model_name == "astrodino":
-            if self.modality != "image":
-                raise ValueError("Invalid modality for AstroDINO")
             embed_dim = 1024
             self.model = nn.Sequential(
                 ImageHead(
@@ -54,23 +63,10 @@ class SupervisedModel(L.LightningModule):
                 nn.Linear(embed_dim, len(self.properties)),
             )
         elif model_name == "conv+att":
-            if self.modality != "spectrum":
-                raise ValueError("Invalid modality for Conv+Att")
             self.model = SpectrumEncoder(n_latent=len(self.properties))
         elif model_name == "specformer":
-            if self.modality != "spectrum":
-                raise ValueError("Invalid modality for SpecFormer")
-            self.model = nn.Sequential(
-                Unsqueeze(dim=-1),
-                SpectrumHead(
-                    model_path=f"{ASTROCLIP_ROOT}/pretrained/specformer.ckpt",
-                    load_pretrained_weights=False,
-                ),
-                nn.LazyLinear(len(self.properties)),
-            )
+            self.model = SupervisedSpecFormer(output_dim=len(self.properties))
         elif model_name == "mlp":
-            if self.modality != "photometry":
-                raise ValueError("Invalid modality for MLP")
             self.model = MLP(
                 n_in=3,
                 n_out=len(self.properties),
@@ -100,7 +96,9 @@ class SupervisedModel(L.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = optim.Adam(self.parameters(), lr=self.lr)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, self.num_epochs)
+        return {"optimizer": optimizer, "scheduler": scheduler}
 
 
 class Unsqueeze(nn.Module):
@@ -248,3 +246,53 @@ class SpectrumEncoder(nn.Module):
             return self._attention_grad
         else:
             return None
+
+
+class SupervisedSpecFormer(nn.Module):
+    def __init__(
+        self,
+        input_dim: int = 22,
+        output_dim: int = 1,
+        embed_dim: int = 48,
+        num_layers: int = 3,
+        num_heads: int = 3,
+        model_embed_dim: int = 48,
+        dropout: float = 0.1,
+    ):
+        """
+        Supervised wrapper for SpecFormer.
+        """
+        super().__init__()
+        # Load the model from the checkpoint
+        self.backbone = SpecFormer(
+            input_dim=22,
+            embed_dim=embed_dim,
+            num_layers=num_layers,
+            num_heads=num_heads,
+            max_len=800,
+            dropout=dropout,
+        )
+
+        # Set up cross-attention
+        self.cross_attention = CrossAttentionHead(
+            embed_dim=embed_dim,
+            n_head=num_heads,
+            model_embed_dim=model_embed_dim,
+            dropout=dropout,
+        )
+
+        # Set up MLP
+        self.mlp = SpecFormerMLP(
+            in_features=embed_dim,
+            hidden_features=2 * embed_dim,
+            dropout=dropout,
+        )
+
+        # Set up final linear
+        self.linear = nn.Linear(embed_dim, output_dim)
+
+    def forward(self, x: torch.tensor, y: torch.tensor = None):
+        embedding = self.backbone(x.unsqueeze(-1))["embedding"]
+        x, attentions = self.cross_attention(embedding)
+        x = self.linear(x + self.mlp(x))
+        return x.squeeze()
