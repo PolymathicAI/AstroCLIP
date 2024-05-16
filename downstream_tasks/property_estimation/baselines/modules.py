@@ -16,7 +16,7 @@ ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
 
 
 class SupervisedModel(L.LightningModule):
-    def __init__(self, model_name, modality, properties, scale, lr=1e-3):
+    def __init__(self, model_name, modality, properties, scale, lr=1e-3, save_dir=None):
         super().__init__()
         self.model_name = model_name
         self.modality = modality
@@ -24,6 +24,7 @@ class SupervisedModel(L.LightningModule):
         self.scale = scale
         self.lr = lr
         self.criterion = nn.MSELoss()
+        self.save_dir = save_dir
         self._initialize_model(model_name)
         self.image_transforms = Compose(
             [
@@ -45,7 +46,7 @@ class SupervisedModel(L.LightningModule):
             self.model = nn.Sequential(
                 ImageHead(
                     freeze_backbone=False,
-                    save_directory=save_dir + "/dino/",
+                    save_directory=self.save_dir + "/dino/",
                     embed_dim=embed_dim,
                     model_weights="",
                     config="../../../astroclip/astrodino/config.yaml",

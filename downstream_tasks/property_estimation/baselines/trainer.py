@@ -78,7 +78,12 @@ def train_baseline(
 
     # Get the model
     model = SupervisedModel(
-        model_name, modality, property_list, data_module.scale, lr=learning_rate
+        model_name,
+        modality,
+        property_list,
+        data_module.scale,
+        lr=learning_rate,
+        save_dir=save_dir,
     )
 
     # Set up val loss checkpoint
@@ -105,6 +110,7 @@ def train_baseline(
         properties=property_list,
         scale=data_module.scale,
         lr=learning_rate,
+        save_dir=save_dir,
     )
 
     # Get the predictions
