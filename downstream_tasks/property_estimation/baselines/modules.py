@@ -58,7 +58,7 @@ class SupervisedModel(L.LightningModule):
                     save_directory=self.save_dir + "/dino/",
                     embed_dim=embed_dim,
                     model_weights="",
-                    config="../../../astroclip/astrodino/config.yaml",
+                    config="astrodino_config.yaml",
                 ),
                 nn.Linear(embed_dim, len(self.properties)),
             )
