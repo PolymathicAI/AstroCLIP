@@ -27,7 +27,7 @@ jobs:
         shell: bash
     strategy:
       matrix:
-        python-version: ['3.12']
+        python-version: ['3.10']
         os: [ubuntu-latest]
 
     steps:
@@ -37,10 +37,37 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+      - name: "Clean up useless files"
+        run: |
+            echo "=============================================================================="
+            echo "Freeing up disk space on CI system"
+            echo "=============================================================================="
+
+            echo "Listing 100 largest packages"
+            dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
+            df -h
+            echo "Removing large packages"
+            sudo apt-get remove -y '^dotnet-.*'
+            sudo apt-get remove -y '^llvm-.*'
+            sudo apt-get remove -y 'php.*'
+            sudo apt-get remove -y azure-cli google-cloud-sdk google-chrome-stable firefox powershell mono-devel
+            sudo apt-get autoremove -y
+            sudo apt-get clean
+            df -h
+            echo "Removing large directories"
+            # deleting 15GB
+            rm -rf /usr/share/dotnet/
+            rm -rf /opt/hostedtoolcache
+            df -h
       - name: "Install dependencies"
         run: |
-            python -m pip install .
-            python -m pip install torch lightning[extra] # Extra dependency since we don't want to force user to use torch version
+            pip install --upgrade pip
+            python -m pip install torch lightning[extra] pycairo # Extra dependency since we don't want to force user to use torch version
+            pip install --extra-index-url https://pypi.nvidia.com cuml-cu11
+            pip install --extra-index-url https://download.pytorch.org/whl/cu117 torch==2.0.0+cu117
+      - name: "Install package"
+        run: |
+            pip install .
       - name: "Check dependencies aren't broken"
         run: python -m pip check
       - name: "Check package can be imported"

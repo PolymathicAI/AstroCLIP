@@ -159,7 +159,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-mmoma/_version.py
+astroclip/_version.py
 
 
 outputs
@@ -167,7 +167,10 @@ wandb
 logs
 notebooks/dev
 notebooks/dev.ipynb
-config.yaml
 *ckpt
 .vscode
 .local
+ceph_data
+astroclip/_version.py
+lightning_logs
+supervised.sh

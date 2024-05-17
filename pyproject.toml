@@ -26,7 +26,9 @@ dynamic = ["dependencies", "version"]
 version_file = "astroclip/_version.py"
 
 [project.scripts]
-
+spectrum_trainer = "astroclip.trainer:main_cli"
+astroclip_trainer = "astroclip.trainer:main_cli"
+image_trainer = "astroclip.astrodino.trainer:main_cli"
 
 [tool.setuptools]
 packages = ["astroclip"]
