@@ -1,9 +1,15 @@
 # AstroCLIP
 
+The goal of this project is to demonstrate the ability of contrastive pre-training between two different kinds of astronomical data modalities (multi-band imaging, and optical spectra), to yield a meaningful embedding space which captures physical information about galaxies and is shared between both modalities.
+
 ![image](assets/im_embedding.png)
 
-## Install
-Note that an up-to-date eventlet is required for wandb.
+
+## Getting Started
+TODO: Link tutorial notebook.
+
+## Installation
+To install the appropriate environment, you can run the following commands. Note that an up-to-date eventlet is required for wandb.
 The following packages are excluded from the project's dependencies to allow for a more flexible system configuration (i.e. allow the use of module subsystem).
 
 ```bash
