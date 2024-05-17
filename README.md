@@ -9,7 +9,8 @@ The goal of this project is to demonstrate the ability of contrastive pre-traini
 TODO: Link tutorial notebook.
 
 ## Installation
-To install the appropriate environment, you can run the following commands. Note that an up-to-date eventlet is required for wandb.
+The training and evaluation code requires PyTorch 2.0. Additionally, an up-to-date eventlet is required for wandb. Note that teh code has only been tested with the specified versions and also expects a Linux environment. To install the AstroCLIP package and its corresponding dependencies, please follow the code below.
+
 The following packages are excluded from the project's dependencies to allow for a more flexible system configuration (i.e. allow the use of module subsystem).
 
 ```bash
@@ -19,7 +20,11 @@ pip install -e .
 ```
 
 
-## Training Single-Modal SSL Models
+## Training
+
+AstroCLIP is trained using a two-step process. 
+
+First, we pre-train a single-modal galaxy image encoder and a single-modal galaxy spectrum encoder separately.
 
 ### Image encoder:
 The AstroDINO model is based on the DINO_v2 model and can be run from the astrodino subdirectory.
