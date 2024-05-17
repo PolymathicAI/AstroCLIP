@@ -107,9 +107,9 @@ class ConditionalFlowStack(dist.conditional.ConditionalComposeTransformModule):
             T.conditional_spline(
                 input_dim,
                 context_dim,
-                count_bins=4,
+                count_bins=8,
                 hidden_dims=hidden_dims,
-                order="linear",
+                order="quadratic",
             ).to(device)
             for _ in range(num_flows)
         ]

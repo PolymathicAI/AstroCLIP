@@ -65,6 +65,8 @@ def train_baseline(
         property_list = ["Z_HP"]
     elif properties == "global_properties":
         property_list = ["LOG_MSTAR", "Z_MW", "TAGE_MW", "sSFR"]
+    elif properties == "all_properties":
+        property_list = ["Z_HP", "LOG_MSTAR", "Z_MW", "TAGE_MW", "sSFR"]
     else:
         raise ValueError(
             "Invalid properties, choose from redshift or global_properties."
@@ -161,7 +163,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_name",
         type=str,
-        help="Model to use (e.g. 'resnet18', 'astrodino', 'specformer', 'conv+att', 'mlp')",
+        help="Model to use (e.g. 'resnet18', 'conv+att', or 'mlp')",
         default="none",
     )
     parser.add_argument(
@@ -179,7 +181,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--properties",
         type=str,
-        help="Properties to predict ('redshift' or 'global_properties')",
+        help="Properties to predict ('redshift', 'global_properties', or 'all_properties)",
         default="global_properties",
     )
     args = parser.parse_args()

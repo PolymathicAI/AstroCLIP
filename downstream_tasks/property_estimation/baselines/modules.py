@@ -10,10 +10,6 @@ from torchvision.transforms import (
 )
 
 from astroclip.env import format_with_env
-from astroclip.models.astroclip import ImageHead, SpectrumHead
-from astroclip.models.specformer import SpecFormer
-from astroclip.modules import MLP as SpecFormerMLP
-from astroclip.modules import CrossAttentionHead
 
 ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
 
@@ -40,22 +36,8 @@ class SupervisedModel(L.LightningModule):
     def _initialize_model(self, model_name):
         if model_name == "resnet18":
             self.model = ResNet18(n_out=len(self.properties))
-        elif model_name == "astrodino":
-            embed_dim = 1024
-            self.model = nn.Sequential(
-                ImageHead(
-                    freeze_backbone=False,
-                    save_directory=save_dir + "/dino/",
-                    embed_dim=embed_dim,
-                    model_weights="",
-                    config="../../../astroclip/astrodino/config.yaml",
-                ),
-                nn.Linear(embed_dim, len(self.properties)),
-            )
         elif model_name == "conv+att":
             self.model = SpectrumEncoder(n_latent=len(self.properties))
-        elif model_name == "specformer":
-            self.model = SupervisedSpecFormer(output_dim=len(self.properties))
         elif model_name == "mlp":
             self.model = MLP(
                 n_in=3,
@@ -89,17 +71,6 @@ class SupervisedModel(L.LightningModule):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, self.num_epochs)
         return {"optimizer": optimizer, "scheduler": scheduler}
-
-
-class Unsqueeze(nn.Module):
-    """Unsqueeze module"""
-
-    def __init__(self, dim: int = -1):
-        super().__init__()
-        self.dim = dim
-
-    def forward(self, x):
-        return x.unsqueeze(self.dim)
 
 
 class ResNet18(nn.Module):
@@ -236,53 +207,3 @@ class SpectrumEncoder(nn.Module):
             return self._attention_grad
         else:
             return None
-
-
-class SupervisedSpecFormer(nn.Module):
-    def __init__(
-        self,
-        input_dim: int = 22,
-        output_dim: int = 1,
-        embed_dim: int = 48,
-        num_layers: int = 3,
-        num_heads: int = 3,
-        model_embed_dim: int = 48,
-        dropout: float = 0.1,
-    ):
-        """
-        Supervised wrapper for SpecFormer.
-        """
-        super().__init__()
-        # Load the model from the checkpoint
-        self.backbone = SpecFormer(
-            input_dim=22,
-            embed_dim=embed_dim,
-            num_layers=num_layers,
-            num_heads=num_heads,
-            max_len=800,
-            dropout=dropout,
-        )
-
-        # Set up cross-attention
-        self.cross_attention = CrossAttentionHead(
-            embed_dim=embed_dim,
-            n_head=num_heads,
-            model_embed_dim=model_embed_dim,
-            dropout=dropout,
-        )
-
-        # Set up MLP
-        self.mlp = SpecFormerMLP(
-            in_features=embed_dim,
-            hidden_features=2 * embed_dim,
-            dropout=dropout,
-        )
-
-        # Set up final linear
-        self.linear = nn.Linear(embed_dim, output_dim)
-
-    def forward(self, x: torch.tensor, y: torch.tensor = None):
-        embedding = self.backbone(x.unsqueeze(-1))["embedding"]
-        x, attentions = self.cross_attention(embedding)
-        x = self.linear(x + self.mlp(x))
-        return x.squeeze()
