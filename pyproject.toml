@@ -5,12 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "AstroClip"
 authors = [
-    {name = "Leopoldo Sarra", email = "lsarra@flatironinstitute.prg"},
-    {name = "Jeff Shen", email = "shenjeff@princeton.edu"},
     {name = "Liam Parker", email = "lparker@flatironinstitute.org"},
+    {name = "Leopoldo Sarra", email = "lsarra@flatironinstitute.prg"},
     {name = "Francois Lanusse", email = "flanusse@flatironinstitute.org"},
-    {name = "Alberto Bietti", email = "albietz@flatironinstitute.org"},
-    {name = "Siavash Golkar", email = "sgolkar@flatironinstitute.org"},
+    {name = "Siavash Golkar", email = "sgolkar@flatironinstitute.org"}
     {name = "Miles Cranmer", email = "mc2473@cam.ac.uk"},
 ]
 description = "AstroCLIP: Cross-Modal Pre-Training for Astronomical Foundation Models"
