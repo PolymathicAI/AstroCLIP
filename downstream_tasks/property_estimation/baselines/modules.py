@@ -15,7 +15,16 @@ ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
 
 
 class SupervisedModel(L.LightningModule):
-    def __init__(self, model_name, modality, properties, scale, num_epochs, lr=1e-3):
+    def __init__(
+        self,
+        model_name,
+        modality,
+        properties,
+        scale,
+        num_epochs,
+        lr=1e-3,
+        save_dir=None,
+    ):
         super().__init__()
         self.model_name = model_name
         self.modality = modality
@@ -24,6 +33,7 @@ class SupervisedModel(L.LightningModule):
         self.lr = lr
         self.num_epochs = num_epochs
         self.criterion = nn.MSELoss()
+        self.save_dir = save_dir
         self._initialize_model(model_name)
         self.image_transforms = Compose(
             [
