@@ -1,6 +1,7 @@
 astropy
 datasets
 dinov2 @ git+https://github.com/facebookresearch/dinov2.git@2302b6bf46953431b969155307b9bed152754069
+huggingface_hub
 jaxtyping
 lightning[extra]
 plotly
