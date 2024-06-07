@@ -192,18 +192,14 @@ AstroCLIP is trained using a two-step process:
 ### Single-Modal Pretraining
 
 #### Image Pretraining - DINOv2 ViT:
-AstroCLIP uses a Vision Transformer (ViT) to encode galaxy images. Pretraining is performed using the [DINOv2](https://github.com/facebookresearch/dinov2/) package, which combines self-distillation, masked-modeling, and contrastive objectives. Overall, we use largely the same training regime, however we modify some of the contrastive augmentations to suit an astrophysics context.
-
-Model training can be launched with the following command:
+AstroCLIP uses a Vision Transformer (ViT) to encode galaxy images. Pretraining is performed using the [DINOv2](https://github.com/facebookresearch/dinov2/) package, which combines self-distillation, masked-modeling, and contrastive objectives. Overall, we use largely the same training regime, however we modify some of the contrastive augmentations to suit an astrophysics context. Model training can be launched with the following command:
 ```
 image_trainer -c astroclip/astrodino/config.yaml
 ```
 We train the model using 20 A100 GPUs (on 5 nodes) for 250k steps which takes roughly 46 hours.
 
 #### Spectrum Pretraining - Masked Modelling Transformer:
-AstroCLIP uses a 1D Transformer to encode galaxy spectra. Pretraining is performed using a masked-modeling objective, whereby the 1D spectrum is split into contiguous, overlapping patches.
-
-Model training can be launched with the following command:
+AstroCLIP uses a 1D Transformer to encode galaxy spectra. Pretraining is performed using a masked-modeling objective, whereby the 1D spectrum is split into contiguous, overlapping patches. Model training can be launched with the following command:
 ```
 spectrum_trainer fit -c config/specformer.yaml
 ```
@@ -219,7 +215,15 @@ We train the model using 4 A100 GPUs (on 1 node) for 25k steps or until the vali
 
 ## Downstream Tasks
 
-TODO
+We demonstrate that the AstroCLIP can be used to easily perform a variety of downstream tasks. In particular, we demonstrate their ability to do:
+
+1. In-modal and cross-modal similarity search
+2. Photometric redshift prediction
+3. Physical property estimation from images
+4. Physical property estimation from spectra
+5. Morphology classification from images
+
+The details of these downstream tasks and the results in our paper can be found in `astroclip/downstream_tasks`.
 
 ## Acknowledgements
 This reposity uses datasets and contrastive augmentations from [Stein, et al. (2022)](https://github.com/georgestein/ssl-legacysurvey/tree/main). The image pretraining is built on top of the [DINOv2](https://github.com/facebookresearch/dinov2/) framework; we also thank Piotr Bojanowski for valuable conversations around image pretraining.
@@ -227,5 +231,5 @@ This reposity uses datasets and contrastive augmentations from [Stein, et al. (2
 ## License
 AstroCLIP code and model weights are released under the MIT license. See [LICENSE](https://github.com/PolymathicAI/AstroCLIP/blob/main/LICENSE) for additional details.
 
-## Citations
+## Citation
 TODO
