@@ -141,7 +141,7 @@ The AstroCLIP model is trained on the cross-matched sample containing optical sp
 from datasets import load_dataset
 
 # This downloads about 60 GB of data
-dset = load_dataset('astroclip/datasets/legacy_survey.py')
+dset = load_dataset('astroclip/data/dataset.py')
 ```
 
 For reproducibility, we include the scripts used to generate the cross-matched datasets [here](https://github.com/PolymathicAI/AstroCLIP/blob/main/astroclip/data/crossmatch_scripts/).
