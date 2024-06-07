@@ -115,7 +115,7 @@ Below, we include a high-level performance overview of our models on a variety o
   </tr>
   <tr>
     <td></td>
-    <td>ZooBoot</td>
+    <td>ZooBot<sup>1</sup></td>
     <td>Supervised</td>
     <td>-</td>
     <td>-</td>
@@ -139,7 +139,7 @@ Below, we include a high-level performance overview of our models on a variety o
   </tr>
   <tr>
     <td></td>
-    <td>Conv+Att</td>
+    <td>Conv+Att<sup>2</sup></td>
     <td>Supervised</td>
     <td>0.99</td>
     <td>0.60</td>
@@ -156,7 +156,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
 </table>
 
-We report R-squared metrics on redshift and galaxy property estimation (averaged across all properties) and accuracy on galaxy morphology classification (averaged across all labels). Our models are marked with an asterisk (*).
+We report R-squared metrics on redshift and galaxy property estimation (averaged across all properties) and accuracy on galaxy morphology classification (averaged across all labels). Our models are marked with an asterisk (*). [1] We use the results reported from [Walmsley, et al. (2021)](https://github.com/mwalmsley/zoobot/tree/main). [2] We use the encoder from [Melchior, et al. (2022)](https://github.com/pmelchior/spender).
 
 ## Data Access
 
