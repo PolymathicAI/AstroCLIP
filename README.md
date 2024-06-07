@@ -146,7 +146,9 @@ dset = load_dataset('astroclip/datasets/legacy_survey.py')
 
 For reproducibility, we include the scripts to generate the cross-matched datasets [here]().
 
-### Image Pretraining
+### Image Pretraining Dataset
+
+![image](assets/decals.png)
 
 While the AstroCLIP and Spectrum Encoder models are trained on the image-spectrum dataset, we pretrain the galaxy image model separately on full Stein, et al. (2022) image dataset, which consists of 76M galaxy images. This dataset can be accessed using this globus endpoint:
 
@@ -157,10 +159,10 @@ The directory is organized into south and north surveys, where each survey is sp
 
 ## Pretraining
 
-AstroCLIP is trained using a two-step process.First, we pre-train a single-modal galaxy image encoder and a single-modal galaxy spectrum encoder separately. Then, we CLIP align these two encoders on a paired image-spectrum dataset.
+AstroCLIP is trained using a two-step process. First, we pre-train a single-modal galaxy image encoder and a single-modal galaxy spectrum encoder separately. Then, we CLIP align these two encoders on a paired image-spectrum dataset.
 
-### DINOv2 ViT Image Pretraining:
-AstroCLIP uses a Vision Transformer (ViT) to encode galaxy images. Pretraining is performed using the [DINOv2](https://github.com/facebookresearch/dinov2/tree/2302b6bf46953431b969155307b9bed152754069) package, which combines self-distillation, masked-modeling, and contrastive objectives. Overall, we use largely the same training regime, however we modify some of the contrastive augmentations to suit an astrophysics context.
+### Image Pretraining - DINOv2 ViT:
+AstroCLIP uses a Vision Transformer (ViT) to encode galaxy images. Pretraining is performed using the [DINOv2](https://github.com/facebookresearch/dinov2/) package, which combines self-distillation, masked-modeling, and contrastive objectives. Overall, we use largely the same training regime, however we modify some of the contrastive augmentations to suit an astrophysics context.
 
 Model training can be launched with the following command:
 ```
@@ -177,7 +179,7 @@ spectrum_trainer fit -c config/specformer.yaml
 ```
 We train the model using 4 A100 GPUs (on 1 node) for 30k steps which takes roughly 12 hours.
 
-### CLIP alignment:
+### CLIP Alignment:
 
 Once pretrained, we align the image and spectrum encoder using cross-attention projection heads. Model training can be launched with the following command:
 ```
@@ -187,4 +189,13 @@ We train the model using 4 A100 GPUs (on 1 node) for 15k steps which takes rough
 
 ## Downstream Tasks
 
+TODO
+
+## Acknowledgements
+This reposity uses datasets and contrastive augmentations from [Stein, et al. (2022)](https://github.com/georgestein/ssl-legacysurvey/tree/main). The image pretraining is built on top of the [DINOv2 pretraining framework](https://github.com/facebookresearch/dinov2/).
+
+## License
+AstroCLIP code and model weights are released under the MIT license. See [LICENSE](https://github.com/PolymathicAI/AstroCLIP/blob/main/LICENSE) for additional details.
+
+## Citations
 TODO
