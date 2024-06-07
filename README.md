@@ -14,7 +14,9 @@ pip install --upgrade pip
 pip install --upgrade eventlet torch lightning[extra]
 pip install -e .
 ```
+**NOTE** The package provides the three shortcuts: `astroclip_trainer` and `spectrum_trainer`, which link to `astroclip/trainer.py`, and `image_trainer`, which links to `astroclip/astrodino/trainer.py`, as long as it is installed. The shortcuts are defined in the `project.scripts` section of the `pyproject.toml` file.
 
+#### Handling roots
 The package expects to load models and data by default from
 ```bash
 {ASTROCLIP_ROOT}
@@ -167,7 +169,7 @@ from datasets import load_dataset
 dset = load_dataset('astroclip/data/dataset.py')
 ```
 
-For reproducibility, we include the scripts used to generate the cross-matched datasets [here](https://github.com/PolymathicAI/AstroCLIP/blob/main/astroclip/data/crossmatch_scripts/).
+For reproducibility, we include the scripts and a brief description of how to generate the cross-matched dataset in `astroclip/data/crossmatch`.
 
 ### Image Pretraining Dataset
 
