@@ -14,7 +14,22 @@ pip install --upgrade pip
 pip install --upgrade eventlet torch lightning[extra]
 pip install -e .
 ```
-It is possible to override default storage path by changing the flag in `astroclip/env.py`
+
+The package expects to load models and data by default from 
+```bash
+{ASTROCLIP_ROOT}
+```
+
+You can configure `ASTROCLIP_ROOT` as well as the weights and biases group in which runs are saved by creating a `.env` file in the root of `astroclip` with the following content:
+
+```bash
+ASTROCLIP_ROOT="/mnt/ceph/users/polymathic/astroclip"
+WANDB_ENTITY_NAME="flatiron-scipt"
+```
+
+If no environment is specified, the default path at Flatiron will be assumed.
+
+
 
 ## Pretrained Models
 
