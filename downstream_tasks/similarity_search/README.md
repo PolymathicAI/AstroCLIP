@@ -1,5 +1,5 @@
 ## In-Modal and Cross-Modal Retrieval
-AstroCLIP enables researchers to easily find similar galaxies to a query galaxy by simply exploiting the cosine similarity between galaxy embeddings in embedding space. Because AstroCLIP's embedding space is shared between both galaxy images and optical spectra, retrieval can be performed for both in-modal and cross-modal similarity searches. 
+AstroCLIP enables researchers to easily find similar galaxies to a query galaxy by simply exploiting the cosine similarity between galaxy embeddings in embedding space. Because AstroCLIP's embedding space is shared between both galaxy images and optical spectra, retrieval can be performed for both in-modal and cross-modal similarity searches.
 
 ### Embedding the dataset
 To perform retrieval on the held-out validation set, it is important to first generate AstroCLIP embeddings of the galaxy images and spectra. We provide the already-embedded held-out validation set here:

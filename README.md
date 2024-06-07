@@ -15,7 +15,7 @@ pip install --upgrade eventlet torch lightning[extra]
 pip install -e .
 ```
 
-The package expects to load models and data by default from 
+The package expects to load models and data by default from
 ```bash
 {ASTROCLIP_ROOT}
 ```
@@ -31,7 +31,7 @@ If no environment is specified, the default path at Flatiron will be assumed.
 
 ## Pretrained Models
 
-We provide the pretrained AstroCLIP model on the Huggingface model hub for easy access. Additionally, we provide the pretrained single-modal models for galaxy images and spectra as well. Model details, checkpoints, configs and logs are below.  
+We provide the pretrained AstroCLIP model on the Huggingface model hub for easy access. Additionally, we provide the pretrained single-modal models for galaxy images and spectra as well. Model details, checkpoints, configs and logs are below.
 
 <table>
   <tr>
@@ -154,7 +154,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
 </table>
 
-We report R-squared metrics on redshift and galaxy property estimation (averaged across all properties) and accuracy on galaxy morphology classification (averaged across all labels). Our models are marked with an asterisk (*). 
+We report R-squared metrics on redshift and galaxy property estimation (averaged across all properties) and accuracy on galaxy morphology classification (averaged across all labels). Our models are marked with an asterisk (*).
 
 ## Data Access
 
@@ -184,7 +184,7 @@ The directory is organized into south and north surveys, where each survey is sp
 
 AstroCLIP is trained using a two-step process:
 
-1. We pre-train a single-modal galaxy image encoder and a single-modal galaxy spectrum encoder separately. 
+1. We pre-train a single-modal galaxy image encoder and a single-modal galaxy spectrum encoder separately.
 2. We CLIP-align these two encoders on a paired image-spectrum dataset.
 
 ### Single-Modal Pretraining
@@ -196,10 +196,10 @@ Model training can be launched with the following command:
 ```
 image_trainer -c astroclip/astrodino/config.yaml
 ```
-We train the model using 20 A100 GPUs (on 5 nodes) for 250k steps which takes roughly 46 hours. 
+We train the model using 20 A100 GPUs (on 5 nodes) for 250k steps which takes roughly 46 hours.
 
 #### Spectrum Pretraining - Masked Modelling Transformer:
-AstroCLIP uses a 1D Transformer to encode galaxy spectra. Pretraining is performed using a masked-modeling objective, whereby the 1D spectrum is split into contiguous, overlapping patches. 
+AstroCLIP uses a 1D Transformer to encode galaxy spectra. Pretraining is performed using a masked-modeling objective, whereby the 1D spectrum is split into contiguous, overlapping patches.
 
 Model training can be launched with the following command:
 ```
@@ -213,14 +213,14 @@ Once pretrained, we align the image and spectrum encoder using cross-attention p
 ```
 spectrum_trainer fit -c config/astroclip.yaml
 ```
-We train the model using 4 A100 GPUs (on 1 node) for 25k steps or until the validation loss does not increase for a fixed number of steps. This takes roughly 12 hours. 
+We train the model using 4 A100 GPUs (on 1 node) for 25k steps or until the validation loss does not increase for a fixed number of steps. This takes roughly 12 hours.
 
 ## Downstream Tasks
 
 TODO
 
 ## Acknowledgements
-This reposity uses datasets and contrastive augmentations from [Stein, et al. (2022)](https://github.com/georgestein/ssl-legacysurvey/tree/main). The image pretraining is built on top of the [DINOv2](https://github.com/facebookresearch/dinov2/) framework; we also thank Piotr Bojanowski for valuable conversations around image pretraining. 
+This reposity uses datasets and contrastive augmentations from [Stein, et al. (2022)](https://github.com/georgestein/ssl-legacysurvey/tree/main). The image pretraining is built on top of the [DINOv2](https://github.com/facebookresearch/dinov2/) framework; we also thank Piotr Bojanowski for valuable conversations around image pretraining.
 
 ## License
 AstroCLIP code and model weights are released under the MIT license. See [LICENSE](https://github.com/PolymathicAI/AstroCLIP/blob/main/LICENSE) for additional details.
