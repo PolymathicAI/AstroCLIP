@@ -1,6 +1,6 @@
 # AstroCLIP
 
-Official PyTorch implementation and pre-trained models for paper **AstroCLIP: A Cross-Modal Foundation Model for Galaxies**.
+Official PyTorch implementation and pre-trained models for the paper **AstroCLIP: A Cross-Modal Foundation Model for Galaxies**.
 
 ![image](assets/im_embedding.png)
 
@@ -31,8 +31,8 @@ We provide the pretrained AstroCLIP model on the Huggingface model hub for easy 
     <td>AstroCLIP</td>
     <td>CLIP</td>
     <td>370M</td>
-    <td><a href="https://github.com/PolymathicAI/AstroCLIP/blob/main/configs/astroclip.yaml">ckpt</a></td>
-    <td><a href="">config</a></td>
+    <td><a href="">ckpt</a></td>
+    <td><a href="https://github.com/PolymathicAI/AstroCLIP/blob/main/configs/astroclip.yaml">config</a></td>
     <td><a href="https://example.com/link3">logs</a></td>
   </tr>
   <tr>
@@ -144,7 +144,7 @@ from datasets import load_dataset
 dset = load_dataset('astroclip/datasets/legacy_survey.py')
 ```
 
-For reproducibility, we include the scripts to generate the cross-matched datasets [here]().
+For reproducibility, we include the scripts used to generate the cross-matched datasets [here](https://github.com/PolymathicAI/AstroCLIP/blob/main/astroclip/data/crossmatch_scripts/).
 
 ### Image Pretraining Dataset
 
@@ -159,9 +159,14 @@ The directory is organized into south and north surveys, where each survey is sp
 
 ## Pretraining
 
-AstroCLIP is trained using a two-step process. First, we pre-train a single-modal galaxy image encoder and a single-modal galaxy spectrum encoder separately. Then, we CLIP align these two encoders on a paired image-spectrum dataset.
+AstroCLIP is trained using a two-step process:
 
-### Image Pretraining - DINOv2 ViT:
+1. We pre-train a single-modal galaxy image encoder and a single-modal galaxy spectrum encoder separately. 
+2. We CLIP-align these two encoders on a paired image-spectrum dataset.
+
+### Single-Modal Pretraining
+
+#### Image Pretraining - DINOv2 ViT:
 AstroCLIP uses a Vision Transformer (ViT) to encode galaxy images. Pretraining is performed using the [DINOv2](https://github.com/facebookresearch/dinov2/) package, which combines self-distillation, masked-modeling, and contrastive objectives. Overall, we use largely the same training regime, however we modify some of the contrastive augmentations to suit an astrophysics context.
 
 Model training can be launched with the following command:
@@ -170,7 +175,7 @@ image_trainer -c astroclip/astrodino/config.yaml
 ```
 We train the model using 20 A100 GPUs (on 5 nodes) for 250k steps which takes roughly 46 hours. 
 
-### Spectrum Pretraining - Masked Modelling Transformer:
+#### Spectrum Pretraining - Masked Modelling Transformer:
 AstroCLIP uses a 1D Transformer to encode galaxy spectra. Pretraining is performed using a masked-modeling objective, whereby the 1D spectrum is split into contiguous, overlapping patches. 
 
 Model training can be launched with the following command:
@@ -181,18 +186,18 @@ We train the model using 4 A100 GPUs (on 1 node) for 30k steps which takes rough
 
 ### CLIP Alignment:
 
-Once pretrained, we align the image and spectrum encoder using cross-attention projection heads. Model training can be launched with the following command:
+Once pretrained, we align the image and spectrum encoder using cross-attention projection heads to maximize the similarity between cross-modal embeddings that correspond to the same galaxy while simultaneously minimizing the similarity between cross-modal embeddings that correspond to different galaxies. Model training can be launched with the following command:
 ```
 spectrum_trainer fit -c config/astroclip.yaml
 ```
-We train the model using 4 A100 GPUs (on 1 node) for 15k steps which takes roughly 12 hours.
+We train the model using 4 A100 GPUs (on 1 node) for 25k steps or until the validation loss does not increase for a fixed number of steps. This takes roughly 12 hours. 
 
 ## Downstream Tasks
 
 TODO
 
 ## Acknowledgements
-This reposity uses datasets and contrastive augmentations from [Stein, et al. (2022)](https://github.com/georgestein/ssl-legacysurvey/tree/main). The image pretraining is built on top of the [DINOv2 pretraining framework](https://github.com/facebookresearch/dinov2/).
+This reposity uses datasets and contrastive augmentations from [Stein, et al. (2022)](https://github.com/georgestein/ssl-legacysurvey/tree/main). The image pretraining is built on top of the [DINOv2](https://github.com/facebookresearch/dinov2/) framework; we also thank Piotr Bojanowski for valuable conversations around image pretraining. 
 
 ## License
 AstroCLIP code and model weights are released under the MIT license. See [LICENSE](https://github.com/PolymathicAI/AstroCLIP/blob/main/LICENSE) for additional details.
