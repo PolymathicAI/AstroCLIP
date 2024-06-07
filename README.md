@@ -29,8 +29,6 @@ WANDB_ENTITY_NAME="flatiron-scipt"
 
 If no environment is specified, the default path at Flatiron will be assumed.
 
-
-
 ## Pretrained Models
 
 We provide the pretrained AstroCLIP model on the Huggingface model hub for easy access. Additionally, we provide the pretrained single-modal models for galaxy images and spectra as well. Model details, checkpoints, configs and logs are below.  
@@ -76,6 +74,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <th>Source</th>
     <th>Model</th>
+    <th>Type</th>
     <th>Redshift</th>
     <th>Galaxy Property (avg)</th>
     <th>Morphology (avg)</th>
@@ -83,6 +82,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <td>Image</td>
     <td>AstroCLIP*</td>
+    <td>Zero-Shot</td>
     <td>0.79</td>
     <td>0.47</td>
     <td>0.76</td>
@@ -90,6 +90,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <td></td>
     <td>Image Encoder*</td>
+    <td>Zero-Shot</td>
     <td>0.63</td>
     <td>0.37</td>
     <td>0.78</td>
@@ -97,6 +98,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <td></td>
     <td>Stein, et al.</td>
+    <td>Zero-Shot</td>
     <td>0.36</td>
     <td>0.26</td>
     <td>0.76</td>
@@ -104,6 +106,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <td></td>
     <td>ResNet18</td>
+    <td>Supervised</td>
     <td>0.77</td>
     <td>0.43</td>
     <td>-</td>
@@ -111,6 +114,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <td></td>
     <td>ZooBoot</td>
+    <td>Supervised</td>
     <td>-</td>
     <td>-</td>
     <td>0.88</td>
@@ -118,6 +122,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <td>Spectrum</td>
     <td>AstroCLIP*</td>
+    <td>Zero-Shot</td>
     <td>0.99</td>
     <td>0.63</td>
     <td>-</td>
@@ -125,6 +130,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <td></td>
     <td>Spectrum Encoder*</td>
+    <td>Zero-Shot</td>
     <td>0.99</td>
     <td>0.64</td>
     <td>-</td>
@@ -132,6 +138,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <td></td>
     <td>Conv+Att</td>
+    <td>Supervised</td>
     <td>0.99</td>
     <td>0.60</td>
     <td>-</td>
@@ -139,6 +146,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
     <td>Photometry</td>
     <td>MLP</td>
+    <td>Supervised</td>
     <td>0.68</td>
     <td>0.42</td>
     <td>-</td>
@@ -146,7 +154,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
 </table>
 
-We report R-squared metrics on redshift and galaxy property estimation and accuracy on galaxy morphology classification (averaged across all labels).Our models are marked with an asterisk (*). The AstroCLIP/Encoder/Stein et al. models are evaluated with zero-shot learning on the embeddings.
+We report R-squared metrics on redshift and galaxy property estimation and accuracy on galaxy morphology classification (averaged across all labels). Our models are marked with an asterisk (*). 
 
 ## Data Access
 
