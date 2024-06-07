@@ -76,8 +76,8 @@ Below, we include a high-level performance overview of our models on a variety o
     <th>Model</th>
     <th>Type</th>
     <th>Redshift</th>
-    <th>Galaxy Property (avg)</th>
-    <th>Morphology (avg)</th>
+    <th>Properties</th>
+    <th>Morphology</th>
   </tr>
   <tr>
     <td>Image</td>
@@ -154,7 +154,7 @@ Below, we include a high-level performance overview of our models on a variety o
   <tr>
 </table>
 
-We report R-squared metrics on redshift and galaxy property estimation and accuracy on galaxy morphology classification (averaged across all labels). Our models are marked with an asterisk (*). 
+We report R-squared metrics on redshift and galaxy property estimation (averaged across all properties) and accuracy on galaxy morphology classification (averaged across all labels). Our models are marked with an asterisk (*). 
 
 ## Data Access
 
