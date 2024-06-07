@@ -53,6 +53,85 @@ We provide the pretrained AstroCLIP model on the Huggingface model hub for easy 
   </tr>
 </table>
 
+#### High-Level Performance Overview
+
+Below, we include a high-level performance overview of our models on a variety of downstream tasks. This is non-exhaustive, and we refer the reader to the paper for the full details.
+
+<table>
+  <tr>
+    <th>Source</th>
+    <th>Model</th>
+    <th>Redshift</th>
+    <th>Galaxy Property (avg)</th>
+    <th>Morphology (avg)</th>
+  </tr>
+  <tr>
+    <td>Image</td>
+    <td>AstroCLIP*</td>
+    <td>0.79</td>
+    <td>0.47</td>
+    <td>0.76</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Image Encoder*</td>
+    <td>0.63</td>
+    <td>0.37</td>
+    <td>0.78</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Stein, et al.</td>
+    <td>0.36</td>
+    <td>0.26</td>
+    <td>0.76</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>ResNet18</td>
+    <td>0.77</td>
+    <td>0.43</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>ZooBoot</td>
+    <td>-</td>
+    <td>-</td>
+    <td>0.88</td>
+  </tr>
+  <tr>
+    <td>Spectrum</td>
+    <td>AstroCLIP*</td>
+    <td>0.99</td>
+    <td>0.63</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Spectrum Encoder*</td>
+    <td>0.99</td>
+    <td>0.64</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Conv+Att</td>
+    <td>0.99</td>
+    <td>0.60</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>Photometry</td>
+    <td>MLP</td>
+    <td>0.68</td>
+    <td>0.42</td>
+    <td>-</td>
+  </tr>
+  <tr>
+</table>
+
+We report R-squared metrics on redshift and galaxy property estimation and accuracy on galaxy morphology classification (averaged across all labels).Our models are marked with an asterisk (*). The AstroCLIP/Encoder/Stein et al. models are evaluated with zero-shot learning on the embeddings.
 
 ## Data Access
 
@@ -76,7 +155,7 @@ https://app.globus.org/file-manager?origin_id=9fb0fc0e-e760-11ec-9bd2-2d2219dcc1
 The directory is organized into south and north surveys, where each survey is split into chunks of 1,000,000 galaxies (sorted by decreasing z-band flux) and saved in hdf5 format. For more details, see [here](https://github.com/georgestein/ssl-legacysurvey/tree/main).
 
 
-## Training
+## Pretraining
 
 AstroCLIP is trained using a two-step process.First, we pre-train a single-modal galaxy image encoder and a single-modal galaxy spectrum encoder separately. Then, we CLIP align these two encoders on a paired image-spectrum dataset.
 
