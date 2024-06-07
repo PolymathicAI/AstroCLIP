@@ -9,6 +9,11 @@ from dotenv import dotenv_values
 WARN_ONCE = True
 
 
+# TODO: change here the defaults
+ASTROCLIP_ROOT = "/mnt/ceph/users/polymathic/astroclip"
+WANDB_ENTITY_NAME = "flatiron-scipt"
+
+
 def default_dotenv_values():
     """Use a default .env but tell the user how to create their own."""
 
@@ -22,8 +27,8 @@ def default_dotenv_values():
         global WARN_ONCE
 
         # TODO: these should be replaced with a folder in the project's root
-        f.write('ASTROCLIP_ROOT="/mnt/ceph/users/polymathic/astroclip"\n')
-        f.write('WANDB_ENTITY_NAME="flatiron-scipt"\n')
+        f.write("ASTROCLIP_ROOT={ASTROCLIP_ROOT}\n")
+        f.write('WANDB_ENTITY_NAME="{WANDB_ENTITY_NAME}"\n')
         f.flush()
 
         if WARN_ONCE:

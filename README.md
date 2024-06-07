@@ -19,10 +19,11 @@ pip install --upgrade eventlet torch lightning[extra]
 pip install -e .
 ```
 
+It is possible to override default storage path by changing the flag in `astroclip/env.py`
 
 ## Training
 
-AstroCLIP is trained using a two-step process. 
+AstroCLIP is trained using a two-step process.
 
 First, we pre-train a single-modal galaxy image encoder and a single-modal galaxy spectrum encoder separately.
 
