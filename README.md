@@ -68,6 +68,15 @@ We provide the pretrained AstroCLIP model on the Huggingface model hub for easy 
   </tr>
 </table>
 
+#### Loading the Pretrained Models
+The pretrained AstroCLIP model can be loaded using the following:
+```python
+from astroclip.models import AstroClipModel
+model = AstroClipModel.load_from_checkpoint(
+    checkpoint_path = "path_to_model.ckpt",
+)
+```
+
 #### High-Level Performance Overview
 
 Below, we include a high-level performance overview of our models on a variety of downstream tasks. This is non-exhaustive, and we refer the reader to the paper for the full details.
