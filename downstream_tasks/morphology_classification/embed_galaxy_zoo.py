@@ -1,5 +1,7 @@
-import os, sys
-sys.path.append('../..')
+import os
+import sys
+
+sys.path.append("../..")
 
 from argparse import ArgumentParser
 from typing import Dict

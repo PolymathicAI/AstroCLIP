@@ -1,8 +1,11 @@
-import os, sys
-sys.path.append('../..')
+import os
+import sys
+
+sys.path.append("../..")
 
 import argparse
 from typing import List
+
 import h5py
 import numpy as np
 import requests
@@ -118,7 +121,9 @@ def _get_file_location(root_dir: List[str]) -> List[str]:
     return files
 
 
-def cross_match_galaxy_zoo(root_dir: str, save_path: str, survey_path: str = None) -> None:
+def cross_match_galaxy_zoo(
+    root_dir: str, save_path: str, survey_path: str = None
+) -> None:
     """
     Pairs Galaxy Zoo classifications with DECaLS images in an Astropy table.
 
