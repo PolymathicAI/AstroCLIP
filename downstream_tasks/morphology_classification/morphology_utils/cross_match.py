@@ -162,6 +162,7 @@ def cross_match_galaxy_zoo(
 
 
 if __name__ == "__main__":
+    ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--root_dir",
