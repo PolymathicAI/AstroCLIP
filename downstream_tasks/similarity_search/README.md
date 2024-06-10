@@ -2,11 +2,7 @@
 AstroCLIP enables researchers to easily find similar galaxies to a query galaxy by simply exploiting the cosine similarity between galaxy embeddings in embedding space. Because AstroCLIP's embedding space is shared between both galaxy images and optical spectra, retrieval can be performed for both in-modal and cross-modal similarity searches.
 
 ### Embedding the dataset
-To perform retrieval on the held-out validation set, it is important to first generate AstroCLIP embeddings of the galaxy images and spectra. We provide the already-embedded held-out validation set here:
-
-TODO
-
-For reproducibility, or to embed another dataset, we also include the scripts that can be used to perform this embedding, which can be executed with
+To perform retrieval on the held-out validation set, it is important to first generate AstroCLIP embeddings of the galaxy images and spectra. To embed the held-out validation dataset, do the following:
 ```python
 python embed_astroclip.py [save_path]
 ```
