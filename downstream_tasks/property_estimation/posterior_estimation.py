@@ -1,7 +1,9 @@
-import os, sys
-sys.path.append('../..')
+import sys
+
+sys.path.append("../..")
 
 import argparse as argparse
+
 import lightning as L
 import numpy as np
 import pyro
