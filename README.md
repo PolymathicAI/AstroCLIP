@@ -1,7 +1,6 @@
 # AstroCLIP
 <a href="https://arxiv.org/abs/2310.03024" style='vertical-align:middle; display:inline;'><img
 							src="https://img.shields.io/badge/astro--ph.IM-arXiv%3A2310.03024-B31B1B.svg" class="plain" style="height:25px;" /></a>
-[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
 
 Official PyTorch implementation and pre-trained models for the paper **AstroCLIP: A Cross-Modal Foundation Model for Galaxies**.
 
