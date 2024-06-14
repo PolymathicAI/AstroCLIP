@@ -46,7 +46,7 @@ We provide the pretrained AstroCLIP model on the Huggingface model hub for easy 
     <td>AstroCLIP</td>
     <td>CLIP</td>
     <td>370M</td>
-    <td><a href="">ckpt</a></td>
+    <td><a href="https://huggingface.co/polymathic-ai/astroclip">ckpt</a></td>
     <td><a href="https://github.com/PolymathicAI/AstroCLIP/blob/main/configs/astroclip.yaml">config</a></td>
     <td><a href="https://example.com/link3">logs</a></td>
   </tr>
@@ -54,7 +54,7 @@ We provide the pretrained AstroCLIP model on the Huggingface model hub for easy 
     <td>Image Encoder</td>
     <td>DINOv2</td>
     <td>302M</td>
-    <td><a href="https://example.com/link1">ckpt</a></td>
+    <td><a href="https://huggingface.co/polymathic-ai/astrodino">ckpt</a></td>
     <td><a href="https://github.com/PolymathicAI/AstroCLIP/blob/main/astroclip/astrodino/config.yaml">config</a></td>
     <td><a href="https://example.com/link3">logs</a></td>
   </tr>
@@ -62,7 +62,7 @@ We provide the pretrained AstroCLIP model on the Huggingface model hub for easy 
     <td>Spectrum Encoder</td>
     <td>Masked Modeling</td>
     <td>43M</td>
-    <td><a href="https://example.com/link1">ckpt</a></td>
+    <td><a href="https://huggingface.co/polymathic-ai/specformer">ckpt</a></td>
     <td><a href="https://github.com/PolymathicAI/AstroCLIP/blob/main/configs/specformer.yaml">config</a></td>
     <td><a href="https://example.com/link3">logs</a></td>
   </tr>
