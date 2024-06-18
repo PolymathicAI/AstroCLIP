@@ -1,0 +1,74 @@
+{
+  "projectName": "AstroCLIP",
+  "projectOwner": "PolymathicAI",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "lhparker1",
+      "name": "Liam Parker",
+      "avatar_url": "https://avatars.githubusercontent.com/u/86175266?v=4",
+      "profile": "https://github.com/lhparker1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "EiffL",
+      "name": "Francois Lanusse",
+      "avatar_url": "https://avatars.githubusercontent.com/u/861591?v=4",
+      "profile": "http://flanusse.net/",
+      "contributions": [
+        "code",
+        "data"
+      ]
+    },
+    {
+      "login": "golkar",
+      "name": "Siavash Golkar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/35383824?v=4",
+      "profile": "https://github.com/golkar",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "lsarra",
+      "name": "Leopoldo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66411731?v=4",
+      "profile": "https://users.flatironinstitute.org/~lsarra/",
+      "contributions": [
+        "code",
+        "tool"
+      ]
+    },
+    {
+      "login": "shirleysurelyho",
+      "name": "Shirley Ho",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3279839?v=4",
+      "profile": "https://github.com/shirleysurelyho",
+      "contributions": [
+        "ideas",
+        "fundingFinding"
+      ]
+    },
+    {
+      "login": "MilesCranmer",
+      "name": "Miles Cranmer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7593028?v=4",
+      "profile": "https://github.com/MilesCranmer",
+      "contributions": [
+        "ideas",
+        "design"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "linkToUsage": false
+}

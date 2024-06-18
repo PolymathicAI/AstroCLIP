@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append("../..")
+
 import argparse as argparse
 
 import lightning as L

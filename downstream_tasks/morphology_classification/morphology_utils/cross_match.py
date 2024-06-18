@@ -1,5 +1,9 @@
-import argparse
 import os
+import sys
+
+sys.path.append("../..")
+
+import argparse
 from typing import List
 
 import h5py
@@ -117,7 +121,9 @@ def _get_file_location(root_dir: List[str]) -> List[str]:
     return files
 
 
-def cross_match_galaxy_zoo(root_dir: str, survey_path: str) -> None:
+def cross_match_galaxy_zoo(
+    root_dir: str, save_path: str, survey_path: str = None
+) -> None:
     """
     Pairs Galaxy Zoo classifications with DECaLS images in an Astropy table.
 
@@ -151,12 +157,12 @@ def cross_match_galaxy_zoo(root_dir: str, survey_path: str) -> None:
     classifications = _get_images(files, classifications)
 
     # Save classifications
-    save_path = survey_path.replace(".csv", ".h5")
     print(f"Saving paired classifications to {save_path}", flush=True)
     classifications.write(save_path, overwrite=True, format="hdf5")
 
 
 if __name__ == "__main__":
+    ASTROCLIP_ROOT = format_with_env("{ASTROCLIP_ROOT}")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--root_dir",
@@ -165,11 +171,17 @@ if __name__ == "__main__":
         help="Root directory of DECaLS images.",
     )
     parser.add_argument(
+        "--save_path",
+        type=str,
+        default=f"{ASTROCLIP_ROOT}/datasets/galaxy_zoo/gz5_decals_crossmatched.hdf5",
+        help="Path to Galaxy Zoo survey.",
+    )
+    parser.add_argument(
         "--survey_path",
         type=str,
-        default=f"{ASTROCLIP_ROOT}/datasets/galaxy_zoo/gz5_decals_crossmatched.csv",
+        default=f"{ASTROCLIP_ROOT}/datasets/galaxy_zoo/gz_decals_volunteers_5.csv",
         help="Path to Galaxy Zoo survey.",
     )
 
     args = parser.parse_args()
-    cross_match_galaxy_zoo(args.root_dir, args.survey_path)
+    cross_match_galaxy_zoo(args.root_dir, args.save_path, args.survey_path)

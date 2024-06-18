@@ -28,7 +28,7 @@ def embed_astroclip(
         batch_size=batch_size,
         num_workers=0,
         collate_fn=AstroClipCollator(),
-        columns=["image", "spectrum"],
+        columns=["image", "spectrum", "targetid"],
     )
     loader.setup("fit")
 
@@ -41,7 +41,7 @@ def embed_astroclip(
         raise ValueError("loader must be either 'train' or 'val'")
 
     # Get the embeddings over the dataset
-    im_embeddings, sp_embeddings, images, spectra = [], [], [], []
+    im_embeddings, sp_embeddings, images, spectra, obj_ids = [], [], [], [], []
     with torch.no_grad():
         for idx, batch_test in tqdm(enumerate(loader), desc="Extracting embeddings"):
             # Break if max_size is reached
@@ -49,8 +49,7 @@ def embed_astroclip(
                 break
 
             # Append the image and spectrum to the list
-            images.append(batch_test["image"])
-            spectra.append(batch_test["spectrum"])
+            obj_ids.append(batch_test["targetid"])
 
             # Extract the embeddings
             im_embeddings.append(
@@ -65,13 +64,16 @@ def embed_astroclip(
                 .cpu()
                 .numpy()
             )
+            images.append(batch_test["image"])
+            spectra.append(batch_test["spectrum"])
 
     # Save as an HDF5 file
     with h5py.File(save_path, "w") as f:
-        f.create_dataset("image", data=np.concatenate(images))
-        f.create_dataset("spectrum", data=np.concatenate(spectra))
         f.create_dataset("image_embeddings", data=np.concatenate(im_embeddings))
         f.create_dataset("spectrum_embeddings", data=np.concatenate(sp_embeddings))
+        f.create_dataset("object_id", data=np.concatenate(obj_ids))
+        f.create_dataset("image", data=np.concatenate(images))
+        f.create_dataset("spectrum", data=np.concatenate(spectra))
     print(f"Embeddings saved to {save_path}")
 
 
