@@ -247,7 +247,18 @@ This reposity uses datasets and contrastive augmentations from [Stein, et al. (2
 AstroCLIP code and model weights are released under the MIT license. See [LICENSE](https://github.com/PolymathicAI/AstroCLIP/blob/main/LICENSE) for additional details.
 
 ## Citation
-TODO
+@article{Parker_2024,
+   title={AstroCLIP: a cross-modal foundation model for galaxies},
+   volume={531},
+   ISSN={1365-2966},
+   url={http://dx.doi.org/10.1093/mnras/stae1450},
+   DOI={10.1093/mnras/stae1450},
+   number={4},
+   journal={Monthly Notices of the Royal Astronomical Society},
+   publisher={Oxford University Press (OUP)},
+   author={Parker, Liam and Lanusse, Francois and Golkar, Siavash and Sarra, Leopoldo and Cranmer, Miles and Bietti, Alberto and Eickenberg, Michael and Krawezik, Geraud and McCabe, Michael and Morel, Rudy and Ohana, Ruben and Pettee, Mariel and Régaldo-Saint Blancard, Bruno and Cho, Kyunghyun and Ho, Shirley},
+   year={2024},
+   month=jun, pages={4990–5011} }
 
 ## Contributors ✨
 
