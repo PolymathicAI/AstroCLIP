@@ -1,3 +1,5 @@
+# This script will cross match the cutouts from the legacy survey
+# cutouts with spectra from the DESI EDR
 import glob
 
 import h5py

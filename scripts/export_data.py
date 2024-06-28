@@ -1,3 +1,5 @@
+# This script exports the data needed for the dataset into a single file.
+#
 import h5py
 import numpy as np
 import pandas as pd
