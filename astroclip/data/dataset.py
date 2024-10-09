@@ -13,6 +13,7 @@
 # limitations under the License.
 """Joint dataset of DESI Legacy Survey and DESI Early Data Release."""
 
+from aiohttp import ClientTimeout 
 import datasets
 import h5py
 import numpy as np
@@ -75,6 +76,7 @@ class AstroClipDataset(datasets.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager):
         urls = _URLS[self.config.name]
+        dl_manager.download_config.storage_options["timeout"] = ClientTimeout(total=5000, connect=1000)
         data_dir = dl_manager.download_and_extract(urls)
         return [
             datasets.SplitGenerator(
