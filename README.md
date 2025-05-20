@@ -13,12 +13,29 @@ Check out our interactive similarity search app, enabling both in-modal and cros
 https://astroclip.streamlit.app/
 
 ## Installation
-The training and evaluation code requires PyTorch 2.0. Additionally, an up-to-date eventlet is required for wandb. Note that the code has only been tested with the specified versions and also expects a Linux environment. To install the AstroCLIP package and its corresponding dependencies, please follow the code below.
+The training and evaluation code requires PyTorch 2.0. Additionally, an up-to-date eventlet is required for wandb. Note that the code has only been tested with the specified versions and also expects a Linux environment. To install the AstroCLIP package and its corresponding dependencies, please follow the code below. The install procedure is unfortunately a bit complex, execute the following cell. Do not restart kernel when prompted, instead run the cell below.
 
 ```bash
-pip install --upgrade pip
-pip install --upgrade eventlet torch lightning[extra]
-pip install -e .
+# Base install of required utilities
+!apt install python3-dev libcairo2-dev pkg-config
+
+# Setting up proper torch version
+!pip install --upgrade pip
+!pip install lightning[extra]==2.3.3 boto3==1.28.17
+!pip install --upgrade pycairo datasets pyarrow
+!pip install --extra-index-url https://pypi.nvidia.com cuml-cu11
+!pip install --extra-index-url https://download.pytorch.org/whl/cu117 torch==2.0.0+cu117
+!pip install torchvision==0.15.0 torchmetrics==0.10.3 dotenv
+!pip install numpy==1.26.4 --force-reinstall
+
+# Installing DiNOv2
+!pip install omegaconf fvcore iopath
+!pip install --no-deps git+https://github.com/facebookresearch/dinov2.git@2302b6bf46953431b969155307b9bed152754069
+
+# Installing AstroCLIP
+!pip install astropy datasets huggingface_hub jaxtyping wandb networkx pyvis
+!pip uninstall -y transformers
+!pip install --no-deps git+https://github.com/PolymathicAI/AstroCLIP.git
 ```
 **NOTE** The package provides the three shortcuts: `astroclip_trainer` and `spectrum_trainer`, which link to `astroclip/trainer.py`, and `image_trainer`, which links to `astroclip/astrodino/trainer.py`, as long as it is installed. The shortcuts are defined in the `project.scripts` section of the `pyproject.toml` file.
 
