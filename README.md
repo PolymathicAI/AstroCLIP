@@ -8,6 +8,10 @@ Official PyTorch implementation and pre-trained models for the paper **AstroCLIP
 
 AstroCLIP is a novel, cross-modal, self-supervised foundation model that creates a shared embedding space for multi-band imaging and optical spectra of galaxies. These embeddings encode meaningful physical information shared between both modalities, and can be used as the basis for competitive zero- and few-shot learning on a variety of downstream tasks, including similarity search, redshift estimation, galaxy property prediction, and morphology classification.
 
+## Tutorial
+Check out a collab-native tutorial available on AstroCLIP here:
+https://colab.research.google.com/github/EiffL/Tutorials/blob/master/FoundationModels/AstroCLIPTutorial.ipynb
+
 ## Web App
 Check out our interactive similarity search app, enabling both in-modal and cross-modal search for galaxies:
 https://astroclip.streamlit.app/
