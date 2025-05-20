@@ -13,7 +13,7 @@ Check out our interactive similarity search app, enabling both in-modal and cros
 https://astroclip.streamlit.app/
 
 ## Installation
-The training and evaluation code requires PyTorch 2.0. Additionally, an up-to-date eventlet is required for wandb. Note that the code has only been tested with the specified versions and also expects a Linux environment. To install the AstroCLIP package and its corresponding dependencies, please follow the code below. The install procedure is unfortunately a bit complex, execute the following cell. Do not restart kernel when prompted, instead run the cell below.
+The training and evaluation code requires PyTorch 2.0. Additionally, an up-to-date eventlet is required for wandb. Note that the code has only been tested with the specified versions and also expects a Linux environment. To install the AstroCLIP package and its corresponding dependencies, please follow the code below. The install procedure is unfortunately a bit complex, but execute these lines in a clean python environment should work.
 
 ```bash
 # Setting up proper torch version
