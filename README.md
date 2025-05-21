@@ -10,7 +10,7 @@ AstroCLIP is a novel, cross-modal, self-supervised foundation model that creates
 
 ## Tutorial
 Check out a collab-native tutorial available on AstroCLIP here:
-https://colab.research.google.com/github/EiffL/Tutorials/blob/master/FoundationModels/AstroCLIPTutorial.ipynb
+https://colab.research.google.com/github/EiffL/Tutorials/blob/master/FoundationModels/AstroCLIPTutorial_solutions.ipynb
 
 ## Web App
 Check out our interactive similarity search app, enabling both in-modal and cross-modal search for galaxies:
